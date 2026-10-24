@@ -131,6 +131,16 @@ export default async function EnviosPage({ searchParams }: { searchParams: Promi
   };
   const inTransit = everything.filter((x) => x.stage === "en_viaje").length;
   const pending = everything.filter((x) => x.stage === stages[0].id || x.stage === "preparado" || x.stage === "empaquetado").length;
+  // Celular: se ve una etapa por vez y se recorren con las flechas de arriba (en escritorio se ven todas las columnas).
+  const etapaParam = param(sp, "etapa");
+  const colIds = columns.map((c) => c.id);
+  const todas = etapaParam === "todas";
+  const current = colIds.includes(etapaParam) ? etapaParam : columns.find((c) => filtered.some((x) => stageOf(x) === c.id))?.id ?? colIds[0];
+  const curIdx = colIds.indexOf(current);
+  const prevCol = curIdx > 0 ? columns[curIdx - 1] : null;
+  const nextCol = curIdx < columns.length - 1 ? columns[curIdx + 1] : null;
+  const curCol = columns[curIdx];
+  const curCount = filtered.filter((x) => stageOf(x) === current).length;
   const href = (extra: Record<string, string>) => {
     const u = new URLSearchParams();
     for (const [k, v] of Object.entries(sp)) if (v && k !== "page") u.set(k, Array.isArray(v) ? v[0] : v);
@@ -168,6 +178,19 @@ export default async function EnviosPage({ searchParams }: { searchParams: Promi
         ))}
       </nav>
       <Filters sp={sp} dates searchPlaceholder="Buscar por cliente, producto, dirección, orden o teléfono" filters={[{ name: "channel", label: "Canal", options: db.settings.channels }]} />
+      {view === "tablero" && !todas && curCol && (
+        <div className="flex items-stretch gap-2 md:hidden" aria-label="Etapas">
+          {prevCol ? <Link href={href({ etapa: prevCol.id })} aria-label={`Etapa anterior: ${prevCol.name}`} className="flex w-24 shrink-0 flex-col items-center justify-center rounded-lg border border-line bg-surface px-1 py-2 text-xs font-medium text-muted hover:text-ink"><span className="text-lg leading-none">←</span><span className="mt-0.5 w-full truncate text-center">{prevCol.name}</span></Link> : <span className="w-24 shrink-0" />}
+          <div className="flex min-w-0 flex-1 flex-col items-center justify-center rounded-lg border-t-4 bg-surface px-2 py-2 text-center shadow-sm" style={{ borderColor: curCol.color }}>
+            <p className="text-[11px] uppercase tracking-wide text-muted">Etapa {curIdx + 1} de {columns.length}</p>
+            <p className="font-semibold">{curCol.name} <span className="text-muted">({curCount})</span></p>
+          </div>
+          {nextCol ? <Link href={href({ etapa: nextCol.id })} aria-label={`Etapa siguiente: ${nextCol.name}`} className="flex w-24 shrink-0 flex-col items-center justify-center rounded-lg border border-line bg-surface px-1 py-2 text-xs font-medium text-muted hover:text-ink"><span className="text-lg leading-none">→</span><span className="mt-0.5 w-full truncate text-center">{nextCol.name}</span></Link> : <span className="w-24 shrink-0" />}
+        </div>
+      )}
+      {view === "tablero" && (
+        <p className="text-center text-xs md:hidden"><Link href={href({ etapa: todas ? current : "todas" })} className="text-primary underline">{todas ? "Ver de a una etapa" : "Ver todas las etapas juntas"}</Link></p>
+      )}
       {hidden > 0 && !all && <p className="text-xs text-muted">Se ocultan {hidden} envíos ya entregados de hace más de 30 días. <Link href={href({ all: "1" })} className="text-primary underline">Ver todo el historial</Link></p>}
       {all && <p className="text-xs text-muted">Mostrando todo el historial. <Link href={href({ all: "" })} className="text-primary underline">Volver a los últimos 30 días</Link></p>}
 
@@ -176,7 +199,7 @@ export default async function EnviosPage({ searchParams }: { searchParams: Promi
           {columns.map((col, ci) => {
             const cards = filtered.filter((x) => stageOf(x) === col.id);
             return (
-              <section key={col.id} className={`w-full rounded-lg bg-bg p-2 md:block md:w-80 md:shrink-0 ${cards.length === 0 ? "hidden" : ""}`}>
+              <section key={col.id} className={`w-full rounded-lg bg-bg p-2 md:block md:w-80 md:shrink-0 ${todas ? (cards.length === 0 ? "hidden" : "") : col.id !== current ? "hidden" : ""}`}>
                 <h2 className="mb-2 flex items-center justify-between border-t-4 px-1 pt-2 text-sm font-semibold" style={{ borderColor: col.color }}>
                   <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full" style={{ background: col.color }} aria-hidden />{col.name}</span>
                   <span className="flex items-center gap-1.5">
@@ -251,10 +274,6 @@ export default async function EnviosPage({ searchParams }: { searchParams: Promi
                               })()}
                             </div>
                             <div className="mt-2 flex items-stretch gap-1.5 border-t border-line pt-2 max-md:flex-wrap">
-                              <div className="grid basis-full grid-cols-2 gap-1.5 md:hidden max-md:order-1">
-                                {ci > 0 && columns[ci - 1].id !== "__sin" ? <ActionButton action={moveShipment.bind(null, x.id, columns[ci - 1].id)} label={`← ${columns[ci - 1].name}`} variant="secondary" tall block /> : <div />}
-                                {ci < columns.length - 1 && columns[ci + 1].id !== "__sin" ? <ActionButton action={moveShipment.bind(null, x.id, columns[ci + 1].id)} label={`${columns[ci + 1].name} →`} variant="secondary" tall block /> : <div />}
-                              </div>
                               <div className="max-md:order-3 max-md:flex-1 max-md:basis-[calc(33.3%-0.25rem)] max-md:[&>*]:w-full">
                               <InfoCardButton title={customerOf(x) || "Envío"} label="Ver el detalle del pedido" large>
                                 <div className="max-h-[70vh] space-y-4 overflow-y-auto pr-1">
@@ -304,14 +323,14 @@ export default async function EnviosPage({ searchParams }: { searchParams: Promi
                                 </div>
                               </InfoCardButton>
                               </div>
-                              <div className={ci > 0 && columns[ci - 1].id !== "__sin" ? "max-md:hidden" : "hidden"}>{ci > 0 && columns[ci - 1].id !== "__sin" && (<ActionButton action={moveShipment.bind(null, x.id, columns[ci - 1].id)} label={`Volver a ${columns[ci - 1].name}`} iconOnly icon={<IconArrowLeft />} />)}</div>
-                              <div className="flex min-w-0 flex-1 max-md:hidden">
+                              <div className={ci > 0 && columns[ci - 1].id !== "__sin" ? "max-md:order-1 max-md:[&>form>button]:h-11 max-md:[&>form>button]:w-11" : "hidden"}>{ci > 0 && columns[ci - 1].id !== "__sin" && (<ActionButton action={moveShipment.bind(null, x.id, columns[ci - 1].id)} label={`Volver a ${columns[ci - 1].name}`} iconOnly icon={<IconArrowLeft />} />)}</div>
+                              <div className={`flex min-w-0 flex-1 max-md:order-2 max-md:[&>*]:min-w-0 ${ci > 0 && columns[ci - 1].id !== "__sin" ? "max-md:basis-[calc(100%-3.25rem)]" : "max-md:basis-full"} max-md:[&_button]:h-11 max-md:[&_button]:text-base`}>
                               {ci < columns.length - 1 && columns[ci + 1].id !== "__sin" ? (
                                 <ActionButton action={moveShipment.bind(null, x.id, columns[ci + 1].id)} label={`${columns[ci + 1].name} →`} variant="primary" tall block />
                               ) : <div className="flex-1" />}
                               </div>
                               <div className="max-md:order-4 max-md:flex-1 max-md:basis-[calc(33.3%-0.25rem)] max-md:[&>*]:w-full"><CreateDrawer buttonLabel="Editar" iconOnly icon={<IconPencil />} variant="secondary" title={`Envío de ${customerOf(x) || "cliente"}`} action={updateShipment.bind(null, x.id)} fields={fields(x)} /></div>
-                              <div className="max-md:order-5 max-md:flex-1 max-md:basis-[calc(33.3%-0.25rem)] max-md:[&>*]:w-full max-md:[&_button]:w-full"><ConfirmActionButton action={deleteShipment.bind(null, x.id)} label="Eliminar envío" message={`¿Eliminar el envío de ${customerOf(x) || "este cliente"}? Esta acción no se puede deshacer.`} icon tall /></div>
+                              <div className="max-md:order-5 max-md:flex-1 max-md:basis-[calc(33.3%-0.25rem)] max-md:[&>*]:w-full"><ConfirmActionButton action={deleteShipment.bind(null, x.id)} label="Eliminar envío" message={`¿Eliminar el envío de ${customerOf(x) || "este cliente"}? Esta acción no se puede deshacer.`} icon tall /></div>
                             </div>
                           </>
                         );
