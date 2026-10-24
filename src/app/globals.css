@@ -30,7 +30,8 @@ dialog::backdrop {
 
 /* Celular: solapas, filtros por período y títulos de sección centrados y parejos en todas las pantallas. */
 @media (max-width: 767px) {
-  main nav[aria-label] { justify-content: center; }
+  main nav[aria-label] { justify-content: center; flex-wrap: wrap; }
+  main nav[aria-label] a, main nav[aria-label] button { text-align: center; }
   main h2, main h3 { text-align: center; }
   main details > summary { text-align: left; }
 }

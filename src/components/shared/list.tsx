@@ -16,7 +16,7 @@ export function PageHeader({ title, subtitle, actions, logo, banner }: { title: 
         )}
         {subtitle && <p className="mt-0.5 text-sm text-muted" style={banner ? { color: banner.sub } : undefined}>{subtitle}</p>}
       </div>
-      {actions && <div className="flex flex-wrap gap-2 max-md:w-full max-md:[&>*]:min-w-[calc(50%-0.25rem)] max-md:[&>*]:flex-1 max-md:[&_a]:h-11 max-md:[&_a]:justify-center max-md:[&_a]:px-2 max-md:[&_a]:text-[13px] max-md:[&_a]:w-full max-md:[&_a]:whitespace-normal max-md:[&_a]:text-center max-md:[&_a]:leading-tight max-md:[&_button]:h-11 max-md:[&_button]:justify-center max-md:[&_button]:px-2 max-md:[&_button]:text-[13px] max-md:[&_button]:w-full max-md:[&_button]:whitespace-normal max-md:[&_button]:leading-tight" style={banner ? { color: "var(--color-ink)" } : undefined}>{actions}</div>}
+      {actions && <div className="flex flex-wrap gap-2 max-md:w-full max-md:[&>*]:min-w-[calc(50%-0.25rem)] max-md:[&>*]:flex-1 max-md:[&_a]:h-11 max-md:[&_a]:justify-center max-md:[&_a]:px-2 max-md:[&_a]:text-[13px] max-md:[&_a]:w-full max-md:[&_a]:whitespace-normal max-md:[&_a]:text-center max-md:[&_a]:leading-tight max-md:[&_button]:h-11 max-md:[&_button]:justify-center max-md:[&_button]:px-2 max-md:[&_button]:text-[13px] max-md:[&_button]:w-full max-md:[&_button]:whitespace-normal max-md:[&_button]:leading-tight max-md:[&_a]:flex max-md:[&_button]:flex max-md:[&_a]:items-center max-md:[&_button]:items-center max-md:[&_a]:gap-1.5 max-md:[&_button]:gap-1.5 max-md:[&_a]:font-medium max-md:[&_button]:font-medium max-md:[&_svg]:h-4 max-md:[&_svg]:w-4 max-md:[&_svg]:shrink-0" style={banner ? { color: "var(--color-ink)" } : undefined}>{actions}</div>}
     </header>
   );
 }
