@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+/* Paleta del brief (sección 4). Uso funcional: azul = acción, verde = positivo,
+   ámbar = advertencia, rojo = crítico, gris = secundario. */
+@theme {
+  --color-primary: #0a0a0a;
+  --color-primary-hover: #2b2b2b;
+  --color-navy: #1e293b;
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-ink: #0f172a;
+  --color-muted: #64748b;
+  --color-line: #e2e8f0;
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  --color-info: #0284c7;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+dialog::backdrop {
+  background: rgb(15 23 42 / 0.4);
+}
+
+/* Celular: solapas, filtros por período y títulos de sección centrados y parejos en todas las pantallas. */
+@media (max-width: 767px) {
+  main nav[aria-label] { justify-content: center; }
+  main h2, main h3 { text-align: center; }
+  main details > summary { text-align: left; }
+}
+
+input::placeholder { text-overflow: ellipsis; }
+@media (max-width: 767px) {
+  /* Tarjetas de a dos: si queda una sola sin pareja, ocupa todo el ancho en vez de quedar a medias. */
+  main .grid.grid-cols-2 > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+}
+
+/* Los hijos de una grilla pueden achicarse: un nombre largo no estira la pantalla. */
+main .grid > * { min-width: 0; }
+
+@media (max-width: 767px) {
+  /* iPhone: con letra menor a 16 px, Safari hace zoom al tocar un campo y la pantalla se corre. */
+  input, select, textarea { font-size: 16px; }
+  main { overflow-x: clip; }
+}
+
+@media (max-width: 767px) {
+  /* Celular: los textos se ven completos (sin "…"); los nombres largos pasan al renglón de abajo. */
+  main .truncate { overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; }
+}
