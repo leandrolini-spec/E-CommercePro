@@ -226,7 +226,7 @@ export default async function MensajesPage({ searchParams }: { searchParams: Pro
         </>}
       />
 
-      <div className="grid items-start gap-4 lg:grid-cols-[13.5rem_22rem_minmax(0,1fr)]">
+      <div className="grid items-start gap-4 lg:grid-cols-[13.5rem_22rem_minmax(0,1fr)] lg:items-stretch">
         {/* Carpetas: cada plataforma con su color y sus tipos de mensaje */}
         {/* Celular: carpetas plegadas para que la lista de mensajes quede a la vista. */}
         <details className="rounded-lg border border-line bg-surface lg:hidden">
@@ -300,11 +300,11 @@ export default async function MensajesPage({ searchParams }: { searchParams: Pro
         </section>
 
         {/* Conversación */}
-        <section className="min-h-48 overflow-hidden rounded-lg border border-line bg-surface">
+        <section className="min-h-48 overflow-hidden rounded-lg border border-line bg-surface lg:flex lg:flex-col">
           {!sel ? (
-            <div className="p-10 text-center text-sm text-muted">Elegí una conversación de la lista para verla y responderla acá.</div>
+            <div className="p-10 text-center text-sm text-muted lg:flex lg:flex-1 lg:items-center lg:justify-center">Elegí una conversación de la lista para verla y responderla acá.</div>
           ) : (
-            <div className="flex flex-col">
+            <div className="flex flex-col lg:flex-1">
               <div className="h-1" style={{ background: CH[sel.channel].color }} />
               <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line p-4">
                 <div className="min-w-0">
