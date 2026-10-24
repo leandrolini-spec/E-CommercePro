@@ -55,17 +55,17 @@ main .grid > * { min-width: 0; }
   main .truncate { overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; }
 }
 
-/* Celular: tarjetas y solapas con borde de color (verde en todo el CRM; el de la marca en Mercado Libre y Tienda Nube, que definen --crm-accent). */
+/* Tarjetas y solapas con borde de color (verde en todo el CRM; el de la marca en Mercado Libre y Tienda Nube, que definen --crm-accent). */
 :root { --crm-accent: #16a34a; }
+main .rounded-lg.border:not(.border-dashed):not(.border-transparent),
+main details.rounded-lg {
+  border-color: var(--crm-accent); border-width: 1.5px;
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--crm-accent) 22%, transparent);
+}
+main nav[aria-label] a, main nav[aria-label] button {
+  border-color: var(--crm-accent); border-width: 1.5px; border-style: solid;
+}
 @media (max-width: 767px) {
   html, body { overflow-x: clip; max-width: 100%; }
   main > div { min-width: 0; max-width: 100%; }
-  main .rounded-lg.border:not(.border-dashed):not(.border-transparent),
-  main details.rounded-lg {
-    border-color: var(--crm-accent); border-width: 1.5px;
-    box-shadow: 0 1px 3px color-mix(in srgb, var(--crm-accent) 22%, transparent);
-  }
-  main nav[aria-label] a, main nav[aria-label] button {
-    border-color: var(--crm-accent); border-width: 1.5px; border-style: solid;
-  }
 }
