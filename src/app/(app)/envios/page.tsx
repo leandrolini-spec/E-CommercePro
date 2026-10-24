@@ -251,6 +251,10 @@ export default async function EnviosPage({ searchParams }: { searchParams: Promi
                               })()}
                             </div>
                             <div className="mt-2 flex items-stretch gap-1.5 border-t border-line pt-2 max-md:flex-wrap">
+                              <div className="grid basis-full grid-cols-2 gap-1.5 md:hidden max-md:order-1">
+                                {ci > 0 && columns[ci - 1].id !== "__sin" ? <ActionButton action={moveShipment.bind(null, x.id, columns[ci - 1].id)} label={`← ${columns[ci - 1].name}`} variant="secondary" tall block /> : <div />}
+                                {ci < columns.length - 1 && columns[ci + 1].id !== "__sin" ? <ActionButton action={moveShipment.bind(null, x.id, columns[ci + 1].id)} label={`${columns[ci + 1].name} →`} variant="secondary" tall block /> : <div />}
+                              </div>
                               <div className="max-md:order-3 max-md:flex-1 max-md:basis-[calc(33.3%-0.25rem)] max-md:[&>*]:w-full">
                               <InfoCardButton title={customerOf(x) || "Envío"} label="Ver el detalle del pedido" large>
                                 <div className="max-h-[70vh] space-y-4 overflow-y-auto pr-1">
@@ -300,14 +304,14 @@ export default async function EnviosPage({ searchParams }: { searchParams: Promi
                                 </div>
                               </InfoCardButton>
                               </div>
-                              <div className={ci > 0 && columns[ci - 1].id !== "__sin" ? "max-md:order-1 max-md:[&>form>button]:h-11 max-md:[&>form>button]:w-11" : "hidden"}>{ci > 0 && columns[ci - 1].id !== "__sin" && (<ActionButton action={moveShipment.bind(null, x.id, columns[ci - 1].id)} label={`Volver a ${columns[ci - 1].name}`} iconOnly icon={<IconArrowLeft />} />)}</div>
-                              <div className={`flex min-w-0 flex-1 max-md:order-2 max-md:[&>*]:min-w-0 ${ci > 0 && columns[ci - 1].id !== "__sin" ? "max-md:basis-[calc(100%-3.25rem)]" : "max-md:basis-full"} max-md:[&_button]:h-11 max-md:[&_button]:text-base`}>
+                              <div className={ci > 0 && columns[ci - 1].id !== "__sin" ? "max-md:hidden" : "hidden"}>{ci > 0 && columns[ci - 1].id !== "__sin" && (<ActionButton action={moveShipment.bind(null, x.id, columns[ci - 1].id)} label={`Volver a ${columns[ci - 1].name}`} iconOnly icon={<IconArrowLeft />} />)}</div>
+                              <div className="flex min-w-0 flex-1 max-md:hidden">
                               {ci < columns.length - 1 && columns[ci + 1].id !== "__sin" ? (
                                 <ActionButton action={moveShipment.bind(null, x.id, columns[ci + 1].id)} label={`${columns[ci + 1].name} →`} variant="primary" tall block />
                               ) : <div className="flex-1" />}
                               </div>
                               <div className="max-md:order-4 max-md:flex-1 max-md:basis-[calc(33.3%-0.25rem)] max-md:[&>*]:w-full"><CreateDrawer buttonLabel="Editar" iconOnly icon={<IconPencil />} variant="secondary" title={`Envío de ${customerOf(x) || "cliente"}`} action={updateShipment.bind(null, x.id)} fields={fields(x)} /></div>
-                              <div className="max-md:order-5 max-md:flex-1 max-md:basis-[calc(33.3%-0.25rem)] max-md:[&>*]:w-full"><ConfirmActionButton action={deleteShipment.bind(null, x.id)} label="Eliminar envío" message={`¿Eliminar el envío de ${customerOf(x) || "este cliente"}? Esta acción no se puede deshacer.`} icon tall /></div>
+                              <div className="max-md:order-5 max-md:flex-1 max-md:basis-[calc(33.3%-0.25rem)] max-md:[&>*]:w-full max-md:[&_button]:w-full"><ConfirmActionButton action={deleteShipment.bind(null, x.id)} label="Eliminar envío" message={`¿Eliminar el envío de ${customerOf(x) || "este cliente"}? Esta acción no se puede deshacer.`} icon tall /></div>
                             </div>
                           </>
                         );
