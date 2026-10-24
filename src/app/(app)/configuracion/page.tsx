@@ -14,13 +14,13 @@ import { SENDER_EMAIL } from "@/lib/contact";
 import { money } from "@/lib/format";
 import { loadDemoData, restoreImportedData, updateList } from "@/modules/actions";
 import { dataSource, getDb } from "@/modules/data";
-import { saveBrand, saveCompany, saveDelivery, saveQuickReplies, saveSystem } from "@/modules/settings-actions";
+import { saveBrand, saveCompany, saveDelivery, saveQuickReplies, saveSystem, setIntegration } from "@/modules/settings-actions";
 import { quickRepliesOf, quickToLines } from "@/modules/quick-replies";
 import { deliveryRules } from "@/modules/delivery";
-import { activeProjectId, service } from "@/modules/repo/supabase";
+import { activeProjectId, isSupabase, service } from "@/modules/repo/supabase";
 import { Guide } from "@/components/ui/Guide";
 
-const TABS = [["empresa", "Empresa"], ["sistema", "Sistema"], ["marca", "Marca y logo"]] as const;
+const TABS = [["empresa", "Empresa"], ["marca", "Marca y logo"], ["sistema", "Sistema"], ["integraciones", "Integraciones"]] as const;
 const TAX_CONDITIONS = ["Monotributista", "Responsable inscripto", "Exento", "Consumidor final", "Sociedad / otra"];
 
 function Field({ label, hint, children, wide }: { label: string; hint?: string; children: ReactNode; wide?: boolean }) {
@@ -193,7 +193,6 @@ export default async function ConfiguracionPage({ searchParams }: { searchParams
             <Guide className="mt-3" title="¿Dónde edito las etapas?">Las etapas del seguimiento de envíos se editan desde la pantalla Envíos.</Guide>
           </Card>
 
-          <Integrations />
 
           <Card title="Módulos del menú">
             <div className="flex flex-wrap gap-1.5">{MODULES.filter((m) => m.slug).map((m) => <Badge key={m.slug} tone={m.enabled ? "success" : "neutral"}>{m.label}</Badge>)}</div>
@@ -214,6 +213,8 @@ export default async function ConfiguracionPage({ searchParams }: { searchParams
           </Card>
         </div>
       )}
+
+      {tab === "integraciones" && <Integrations alerts={Boolean(c.alerts?.enabled && c.alerts?.ntfyTopic)} off={c.integrationsOff ?? []} />}
 
       {tab === "marca" && (
         <form action={saveBrand} className="grid items-start gap-4 lg:grid-cols-[1fr_22rem]">
@@ -284,32 +285,57 @@ export default async function ConfiguracionPage({ searchParams }: { searchParams
 }
 
 /** Estado de las conexiones con Mercado Libre y Tienda Nube. */
-async function Integrations() {
-  const projectId = await activeProjectId();
-  const sb = service();
-  const [ml, tn] = await Promise.all([
-    sb.from("ml_accounts").select("nickname,status").eq("project_id", projectId).maybeSingle(),
-    sb.from("tn_accounts").select("store_name,status").eq("project_id", projectId).maybeSingle(),
-  ]);
-  const rows: [string, string, boolean, string][] = [
-    ["Mercado Libre", ml.data?.nickname ? String(ml.data.nickname) : "", ml.data?.status === "connected", "/mercadolibre"],
-    ["Tienda Nube", tn.data?.store_name ? String(tn.data.store_name) : "", tn.data?.status === "connected", "/tiendanube"],
-    ["WhatsApp", "mensajes de clientes", metaConfigured(), "/mensajes"],
-    ["Instagram", "mensajes directos", metaConfigured(), "/mensajes"],
+type Integration = { id?: string; name: string; detail: string; blurb: string; status: "ok" | "off" | "soon"; okLabel?: string; href?: string; logo?: string; initials: string };
+
+async function Integrations({ alerts, off }: { alerts: boolean; off: string[] }) {
+  let ml: { nickname?: unknown; status?: unknown } | null = null, tn: { store_name?: unknown; status?: unknown } | null = null;
+  if (isSupabase()) {
+    const sb = service();
+    const projectId = await activeProjectId();
+    const [a, b] = await Promise.all([
+      sb.from("ml_accounts").select("nickname,status").eq("project_id", projectId).maybeSingle(),
+      sb.from("tn_accounts").select("store_name,status").eq("project_id", projectId).maybeSingle(),
+    ]);
+    ml = a.data; tn = b.data;
+  }
+  const meta = metaConfigured();
+  const stores: Integration[] = [
+    { id: "mercadolibre", name: "Mercado Libre", detail: ml?.nickname ? String(ml.nickname) : "", blurb: "Ventas, publicaciones, preguntas y mensajes de compradores.", status: ml?.status === "connected" ? "ok" : "off", href: "/mercadolibre", logo: "/brand/mercadolibre-logo.png", initials: "ML" },
+    { id: "tiendanube", name: "Tienda Nube", detail: tn?.store_name ? String(tn.store_name) : "", blurb: "Pedidos, productos, stock y clientes de tu tienda.", status: tn?.status === "connected" ? "ok" : "off", href: "/tiendanube", logo: "/brand/tiendanube-logo.png", initials: "TN" },
+    { name: "Shopify", detail: "", blurb: "Otra plataforma de tiendas online.", status: "soon", logo: "/brand/shopify-logo.png", initials: "S" },
+    { name: "WooCommerce", detail: "", blurb: "Tienda online sobre WordPress.", status: "soon", logo: "/brand/woocommerce-logo.png", initials: "W" },
+    { name: "Empretienda", detail: "", blurb: "Plataforma argentina de tiendas online.", status: "soon", logo: "/brand/empretienda-logo.png", initials: "E" },
+    { name: "VTEX", detail: "", blurb: "Plataforma de comercio para tiendas grandes.", status: "soon", logo: "/brand/vtex-logo.png", initials: "V" },
   ];
+  const messaging: Integration[] = [
+    { id: "whatsapp", name: "WhatsApp", detail: "mensajes de clientes", blurb: "Los mensajes entran solos a la bandeja de Mensajes.", status: meta ? "ok" : "off", okLabel: "Listo", href: "/mensajes", logo: "/brand/whatsapp-logo.png", initials: "WA" },
+    { id: "instagram", name: "Instagram", detail: "mensajes directos", blurb: "Los mensajes directos entran solos a la bandeja de Mensajes.", status: meta ? "ok" : "off", okLabel: "Listo", href: "/mensajes", logo: "/brand/instagram-logo.png", initials: "IG" },
+    { name: "ntfy", detail: "Notificaciones de celular", blurb: "Notificaciones cuando entra una pregunta o un mensaje.", status: alerts ? "ok" : "off", okLabel: "Activos", href: "/mensajes", logo: "/brand/ntfy-logo.svg", initials: "!" },
+  ];
+  const row = (i0: Integration) => {
+    const disabled = Boolean(i0.id && off.includes(i0.id));
+    const i: Integration = disabled ? { ...i0, status: "off" } : i0;
+    return (
+    <li key={i.name} className="flex min-h-[19.5rem] flex-col items-center gap-2 rounded-lg border border-line bg-bg/40 p-4 text-center">
+      <span className="flex h-16 w-full max-w-[12rem] items-center justify-center rounded-lg border border-line bg-white p-2.5">{i.logo ? <img src={i.logo} alt="" className="max-h-full max-w-full object-contain" /> : <span aria-hidden className="grid h-9 w-9 place-items-center rounded-full bg-primary text-xs font-semibold text-white">{i.initials}</span>}</span>
+      <p className="min-h-10 font-semibold">{i.name}{i.detail && <span className="block text-xs font-normal text-muted">{i.detail}</span>}</p>
+      <p className="min-h-8 text-xs text-muted">{i.blurb}</p>
+      <Badge tone={disabled ? "neutral" : i.status === "ok" ? "success" : i.status === "soon" ? "neutral" : "warning"} fixed>{disabled ? "Desactivada" : i.status === "ok" ? (i.okLabel ?? "Conectada") : i.status === "soon" ? "Próximamente" : "Sin conectar"}</Badge>
+      <div className="mt-auto flex w-full flex-col gap-2 pt-1">
+      {i.href && !disabled ? <Link href={i.href} className="inline-flex h-9 w-full items-center justify-center rounded-md border border-line bg-surface text-sm font-medium hover:bg-bg">{i.status === "ok" ? "Abrir" : "Conectar"}</Link> : <span className="inline-flex h-9 w-full cursor-not-allowed items-center justify-center rounded-md border border-dashed border-line text-sm text-muted/70">{disabled ? "Desactivada para este negocio" : "Todavía no disponible"}</span>}
+      {i.id && <div className="flex w-full [&_button]:w-full"><ActionButton action={setIntegration.bind(null, i.id, disabled)} label={disabled ? "Activar" : "Desactivar"} variant="secondary" tall block /></div>}
+      </div>
+    </li>
+  ); };
   return (
-    <Card title="Conexiones" subtitle="Las tiendas conectadas al CRM.">
-      <ul className="divide-y divide-line text-sm">
-        {rows.map(([name, detail, ok, href]) => (
-          <li key={name} className="flex flex-wrap items-center justify-between gap-2 py-2">
-            <span className="min-w-0"><span className="font-medium">{name}</span>{detail && <span className="ml-2 text-muted">{detail}</span>}</span>
-            <span className="flex items-center gap-3">
-              <Badge tone={ok ? "success" : "warning"} fixed>{ok ? (name === "WhatsApp" || name === "Instagram" ? "Listo" : "Conectada") : "Sin conectar"}</Badge>
-              <Link href={href} className="inline-flex h-7 w-16 items-center justify-center rounded-md border border-line text-xs font-medium hover:bg-bg">Abrir</Link>
-            </span>
-          </li>
-        ))}
-      </ul>
-    </Card>
+    <div className="space-y-4">
+      <Card title="Tiendas online" subtitle="Dónde vendés. Cada negocio usa solo las suyas: desactivá las que no necesites y se ocultan del menú. Las que dicen «Próximamente» todavía no están construidas.">
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{stores.map(row)}</ul>
+      </Card>
+      <Card title="Mensajería y avisos" subtitle="Cómo te llegan los mensajes de tus clientes y los avisos.">
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{messaging.map(row)}</ul>
+        <Guide className="mt-3" title="¿Cómo conecto WhatsApp e Instagram?">Hay que crear una app en Meta (developers.facebook.com), cargar sus claves en el servidor y pegar las direcciones de los webhooks. Los pasos exactos y las direcciones están en la pantalla Mensajes, en «Canales conectados».</Guide>
+      </Card>
+    </div>
   );
 }

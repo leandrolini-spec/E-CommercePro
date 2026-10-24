@@ -131,3 +131,15 @@ export async function saveQuickReplies(fd: FormData) {
   await persist(db);
   for (const path of ["/configuracion", "/envios", "/clientes", "/ventas", "/mensajes"]) revalidatePath(path);
 }
+
+/** Activa o desactiva una integración para este negocio (cada cliente usa solo las suyas). */
+export async function setIntegration(id: string, on: boolean): Promise<void> {
+  if (!(await hasValidSession())) return;
+  const db = await getDb();
+  const company = (db.settings.company ??= {});
+  const off = new Set(company.integrationsOff ?? []);
+  if (on) off.delete(id); else off.add(id);
+  company.integrationsOff = [...off];
+  await persist(db);
+  revalidatePath("/", "layout");
+}

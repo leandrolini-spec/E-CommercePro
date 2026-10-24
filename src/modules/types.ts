@@ -130,7 +130,7 @@ export type CompanyInfo = {
   deliveryDays?: number[]; deliveryFrom?: string; pickupFrom?: string; pickupTo?: string; deliveryOff?: string[];
   /** Avisos al celular del negocio (notificación por ntfy.sh): cuando entra una pregunta o un mensaje de un comprador y cuando pasa una hora sin responder. */
   alerts?: { enabled: boolean; ntfyTopic: string };
-  /** Abastecimiento de packs: capacidad semanal del productor, margen de seguridad (%) y el último conteo de packs en mano. */
+  /** Abastecimiento de bandejas: capacidad semanal del productor, margen de seguridad (%) y el último conteo de bandejas en mano. */
   trayPlan?: { capacity: number; buffer: number; stock?: { date: string; counts: Record<string, number> } };
   /** Chofer de reparto: sus datos se anotan en cada envío que sale "En viaje". */
   driverName?: string; driverPhone?: string; driverVehicle?: string; driverPlate?: string;
@@ -138,6 +138,8 @@ export type CompanyInfo = {
   driverActive?: boolean;
   /** Mercado Libre: manda solo la bienvenida a las compras de productos apenas entran (apagado por defecto). */
   welcomeAuto?: boolean;
+  /** Integraciones que este negocio no usa (se ocultan del menú y figuran como desactivadas). Ej: "mercadolibre", "tiendanube". */
+  integrationsOff?: string[];
   /** Respuestas rápidas para las mensajerías (si está vacío se usan las que vienen armadas). */
   quickReplies?: { title: string; text: string }[];
 };

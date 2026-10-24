@@ -19,7 +19,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/">) {
     ? activeProjectId().then((id) => Promise.all([mlData(id, { messages: false }).catch(() => null), mlAlerts(id).catch(() => [])]))
     : Promise.resolve([null, []] as const);
   const all = await getDb();
-  // Por defecto solo cuenta lo de la sociedad (desde el 1/10/2026); "Incluir lo anterior" muestra también el historial previo.
+  // Por defecto solo cuenta lo de la sociedad (desde la fecha de inicio de la sociedad); "Incluir lo anterior" muestra también el historial previo.
   const withHistory = param(sp, "h") === "1";
   const db = withHistory ? all : sociedadDb(all);
   const k = kpis(db, from, to);
