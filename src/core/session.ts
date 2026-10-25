@@ -24,31 +24,36 @@ export const cookieOptions = {
 
 /** Verifica el access token; si venció, intenta renovarlo con el refresh token. */
 // Un token ya verificado se da por válido 2 minutos: evita un viaje a Supabase Auth en cada pantalla.
-const verified = new Map<string, number>();
+const verified = new Map<string, { at: number; userId: string }>();
 const VERIFY_TTL = 120_000;
+
+/** Lo mínimo del cliente de auth que usa verifySession (permite probarla sin un Supabase real). */
+export type AuthLike = Pick<ReturnType<typeof authClient>["auth"], "getClaims" | "refreshSession">;
 
 export async function verifySession(
   accessToken?: string,
   refreshToken?: string,
-): Promise<{ ok: boolean; refreshed?: { access_token: string; refresh_token: string } }> {
-  const client = authClient();
+  auth: AuthLike = authClient().auth,
+): Promise<{ ok: boolean; userId?: string; refreshed?: { access_token: string; refresh_token: string } }> {
   if (accessToken) {
     const seen = verified.get(accessToken);
-    if (seen && Date.now() - seen < VERIFY_TTL) return { ok: true };
+    if (seen && Date.now() - seen.at < VERIFY_TTL) return { ok: true, userId: seen.userId };
     // getClaims verifica la firma del token con las claves públicas del proyecto (se guardan en memoria): es instantáneo.
     // Si el proyecto usa una clave simétrica, la propia librería consulta al servidor de autenticación, como antes.
-    const { data, error } = await client.auth.getClaims(accessToken);
-    if (!error && data?.claims) {
-      verified.set(accessToken, Date.now());
-      if (verified.size > 200) for (const [k, t] of verified) if (Date.now() - t > VERIFY_TTL) verified.delete(k);
-      return { ok: true };
+    const { data, error } = await auth.getClaims(accessToken);
+    const userId = data?.claims?.sub;
+    if (!error && userId) {
+      verified.set(accessToken, { at: Date.now(), userId });
+      if (verified.size > 200) for (const [k, v] of verified) if (Date.now() - v.at > VERIFY_TTL) verified.delete(k);
+      return { ok: true, userId };
     }
   }
   if (!refreshToken) return { ok: false };
-  const { data, error } = await client.auth.refreshSession({ refresh_token: refreshToken });
+  const { data, error } = await auth.refreshSession({ refresh_token: refreshToken });
   if (error || !data.session) return { ok: false };
   return {
     ok: true,
+    userId: data.session.user.id,
     refreshed: {
       access_token: data.session.access_token,
       refresh_token: data.session.refresh_token,

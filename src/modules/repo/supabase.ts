@@ -1,17 +1,11 @@
 // Repositorio Supabase. Solo se usa desde el servidor, con la clave de servicio.
 // Toda lectura y escritura va filtrada por project_id.
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { service } from "@/core/db-client";
 import { inAgenda } from "../customers";
 import type { Db } from "../types";
 
-let client: SupabaseClient | null = null;
-export function service(): SupabaseClient {
-  if (client) return client;
-  // trim: al pegar valores en el panel del servidor es común que se cuelen espacios o saltos de línea.
-  const url = process.env.SUPABASE_URL?.trim(), key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
-  if (!url || !key) throw new Error("Falta SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY.");
-  return (client = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } }));
-}
+// El cliente vive en core/db-client para que la resolución de empresa (core/membership) no dependa de este archivo.
+export { service };
 
 export const isSupabase = () => Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY) && process.env.DATA_SOURCE !== "file";
 
