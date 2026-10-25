@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { getEnv } from "./env";
+import { getEnv, isAuthBypassed } from "./env";
 
 export const ACCESS_COOKIE = "sb-access-token";
 export const REFRESH_COOKIE = "sb-refresh-token";
@@ -63,7 +63,7 @@ export async function verifySession(
 
 /** Verifica la sesión desde cookies (para route handlers y acciones; el proxy solo hace un chequeo optimista). */
 export async function hasValidSession(): Promise<boolean> {
-  if (process.env.NODE_ENV !== "production" && process.env.DEV_BYPASS_AUTH === "1") return true;
+  if (isAuthBypassed()) return true;
   const { cookies } = await import("next/headers");
   const store = await cookies();
   return (await verifySession(store.get(ACCESS_COOKIE)?.value, store.get(REFRESH_COOKIE)?.value)).ok;

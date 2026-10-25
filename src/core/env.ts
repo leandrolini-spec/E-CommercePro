@@ -21,7 +21,16 @@ export function getEnv(): Env {
   return parsed.data;
 }
 
-/** El bypass solo vale fuera de producción, aunque la variable esté puesta. */
+/** Hay una base Supabase configurada (clave de servicio cargada y sin forzar el modo archivo). */
+export const supabaseConfigured = () => Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY) && process.env.DATA_SOURCE !== "file";
+
+/**
+ * Modo demostración: sin base Supabase y fuera de producción, la app abre directo con datos de ejemplo (guardados en /data)
+ * y sin pantalla de ingreso. En producción nunca se activa: ahí falta configuración y se avisa.
+ */
+export const isDemoMode = () => process.env.NODE_ENV !== "production" && !supabaseConfigured();
+
+/** Entrar sin iniciar sesión: el modo demostración, o DEV_BYPASS_AUTH=1 en desarrollo. Nunca en producción. */
 export function isAuthBypassed(): boolean {
-  return process.env.NODE_ENV !== "production" && process.env.DEV_BYPASS_AUTH === "1";
+  return process.env.NODE_ENV !== "production" && (isDemoMode() || process.env.DEV_BYPASS_AUTH === "1");
 }

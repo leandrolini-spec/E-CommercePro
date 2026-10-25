@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { isAuthBypassed, isDemoMode } from "@/core/env";
 
 // Chequeo optimista: solo mira si hay cookies de sesión. La verificación real
 // del token se hace en el layout de (app) y en cada route handler protegido.
@@ -11,7 +12,9 @@ const SECRET_PREFIXES = ["/api/cron", "/api/integrations", "/api/tiendanube/webh
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  if (process.env.NODE_ENV !== "production" && process.env.DEV_BYPASS_AUTH === "1") {
+  if (isAuthBypassed()) {
+    // En modo demostración no hay ingreso: si alguien abre /login, va directo a la app.
+    if (isDemoMode() && pathname === "/login") return NextResponse.redirect(new URL("/", request.url));
     return NextResponse.next();
   }
   if ([...PUBLIC_PREFIXES, ...SECRET_PREFIXES, ...DEV_ONLY_PREFIXES].some((p) => pathname.startsWith(p))) {

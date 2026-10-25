@@ -2,7 +2,7 @@
 // Toda lectura y escritura va filtrada por project_id.
 import { cache } from "react";
 import { service } from "@/core/db-client";
-import { isAuthBypassed } from "@/core/env";
+import { isAuthBypassed, supabaseConfigured } from "@/core/env";
 import { currentCompany } from "@/core/membership";
 import { inAgenda } from "../customers";
 import type { Db } from "../types";
@@ -10,7 +10,7 @@ import type { Db } from "../types";
 // El cliente vive en core/db-client para que la resolución de empresa (core/membership) no dependa de este archivo.
 export { service };
 
-export const isSupabase = () => Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY) && process.env.DATA_SOURCE !== "file";
+export const isSupabase = supabaseConfigured;
 
 async function all<T = Record<string, unknown>>(table: string, projectId: string): Promise<T[]> {
   const { data, error } = await service().from(table).select("*").eq("project_id", projectId);
@@ -41,7 +41,7 @@ const devProjectId = cache(async (): Promise<string> => {
  * (webhooks, tareas programadas) reciben el proyecto de forma explícita.
  */
 export const activeProjectId = cache(async (): Promise<string> => {
-  if (isAuthBypassed()) return devProjectId();
+  if (isAuthBypassed() && isSupabase()) return devProjectId();
   const c = await currentCompany();
   if (c.status !== "ok") throw new CompanyError(c.status);
   return c.projectId;

@@ -15,6 +15,11 @@ const DB_TTL = process.env.VERCEL ? 0 : 30_000;
 // (memoria en 0) el guardado volvía a leer la base, guardaba una copia sin cambios y la edición se perdía en silencio.
 const lastLoaded = new Map<string, Db>();
 
+/** El almacén de archivo es solo para desarrollo: en producción sin base configurada no se sirven datos de ejemplo. */
+function assertFileStoreAllowed() {
+  if (process.env.NODE_ENV === "production") throw new Error("Configuración incompleta: falta la base de datos (SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY).");
+}
+
 const loadCurrent = cache(async (): Promise<Db> => {
   const id = await activeProjectId();
   const db = await memo(`db:${id}`, DB_TTL, () => loadDbSnap(id));
@@ -31,15 +36,17 @@ export async function invalidateDb(projectId?: string) {
 
 /** Datos de una empresa concreta, para pedidos sin sesión (enlaces públicos). Solo lectura: no se usa para guardar. */
 export async function getDbForProject(projectId: string): Promise<Db> {
-  return isSupabase() ? memo(`db:${projectId}`, DB_TTL, () => loadDbSnap(projectId)) : getFileDb();
+  if (!isSupabase()) { assertFileStoreAllowed(); return getFileDb(); }
+  return memo(`db:${projectId}`, DB_TTL, () => loadDbSnap(projectId));
 }
 
 export async function getDb(): Promise<Db> {
-  return isSupabase() ? loadCurrent() : getFileDb();
+  if (!isSupabase()) { assertFileStoreAllowed(); return getFileDb(); }
+  return loadCurrent();
 }
 
 export async function persist(db?: Db): Promise<void> {
-  if (!isSupabase()) return persistFile();
+  if (!isSupabase()) { assertFileStoreAllowed(); return persistFile(); }
   const id = await activeProjectId();
   try {
     await saveDb(id, db ?? lastLoaded.get(id) ?? (await loadCurrent()));
