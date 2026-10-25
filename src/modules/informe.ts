@@ -24,10 +24,12 @@ export function mesesDisponibles(hoy: string, max = 14): string[] {
 
 /* ---- Enlace para compartir (sin iniciar sesión): firmado, solo sirve para ese mes ---- */
 const secret = () => process.env.TOKEN_ENC_KEY ?? process.env.CRON_SECRET ?? "";
-export const informeToken = (mes: string) => createHmac("sha256", secret()).update(`informe:${mes}`).digest("base64url").slice(0, 32);
-export function informeTokenOk(mes: string, token: string | null): boolean {
+// Con empresa ("projectId") la firma incluye la empresa: el enlace solo abre el informe de esa empresa y ese mes.
+// Sin empresa es el formato anterior: sirve en despliegues con una sola empresa, para no invalidar enlaces ya enviados.
+export const informeToken = (mes: string, projectId?: string) => createHmac("sha256", secret()).update(projectId ? `informe:${projectId}:${mes}` : `informe:${mes}`).digest("base64url").slice(0, 32);
+export function informeTokenOk(mes: string, token: string | null, projectId?: string): boolean {
   if (!secret() || !token) return false;
-  const a = Buffer.from(informeToken(mes)), b = Buffer.from(token);
+  const a = Buffer.from(informeToken(mes, projectId)), b = Buffer.from(token);
   return a.length === b.length && timingSafeEqual(a, b);
 }
 

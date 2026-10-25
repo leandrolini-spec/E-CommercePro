@@ -29,6 +29,11 @@ export async function invalidateDb(projectId?: string) {
   if (id) { forget(`db:${id}`); forgetSnapshot(id); }
 }
 
+/** Datos de una empresa concreta, para pedidos sin sesión (enlaces públicos). Solo lectura: no se usa para guardar. */
+export async function getDbForProject(projectId: string): Promise<Db> {
+  return isSupabase() ? memo(`db:${projectId}`, DB_TTL, () => loadDbSnap(projectId)) : getFileDb();
+}
+
 export async function getDb(): Promise<Db> {
   return isSupabase() ? loadCurrent() : getFileDb();
 }

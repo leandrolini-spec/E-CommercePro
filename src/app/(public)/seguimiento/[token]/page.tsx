@@ -5,14 +5,15 @@ import { waLink } from "@/lib/contact";
 import { fdate } from "@/lib/format";
 import { brandColor, brandSoft, softBorder } from "@/lib/brand";
 import { brandFonts, fontBold, fontsHref } from "@/lib/fonts";
-import { getDb } from "@/modules/data";
+import { dbForShipment } from "@/modules/public-db";
 import { deliveryRules, entregaLabel, estimateDelivery, horarioLabel, retiroLabel } from "@/modules/delivery";
 import { shipmentIdFromToken } from "@/modules/seguimiento";
 import { stagesOf } from "@/modules/shipments";
 
 /** Lo que muestra WhatsApp al pegar el enlace: nombre de la empresa e imagen con su logo (en lugar del ícono por defecto). */
-export async function generateMetadata() {
-  const db = await getDb().catch(() => null);
+export async function generateMetadata({ params }: { params: Promise<{ token: string }> }) {
+  const id = shipmentIdFromToken((await params).token);
+  const db = id ? await dbForShipment(id).catch(() => null) : null;
   const name = db?.settings.name ?? "Tu pedido";
   const description = `Seguí el estado de tu pedido y la fecha de entrega. ${name}.`;
   return {
@@ -30,7 +31,8 @@ export default async function SeguimientoPage({ params }: { params: Promise<{ to
   const { token } = await params;
   const id = shipmentIdFromToken(token);
   if (!id) notFound();
-  const db = await getDb();
+  const db = await dbForShipment(id);
+  if (!db) notFound();
   const x = (db.shipments ?? []).find((s) => s.id === id);
   if (!x) notFound();
 

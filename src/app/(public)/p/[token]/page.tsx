@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { PrintButton } from "@/components/shared/PrintButton";
 import { QuoteSheet } from "@/components/shared/QuoteSheet";
-import { getDb } from "@/modules/data";
+import { dbForQuoteToken } from "@/modules/public-db";
 
 export const metadata = { title: "Presupuesto", robots: { index: false, follow: false } };
 
@@ -9,7 +9,8 @@ export const metadata = { title: "Presupuesto", robots: { index: false, follow: 
 export default async function PresupuestoPublico({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   if (!/^[a-f0-9]{32,}$/.test(token)) notFound();
-  const db = await getDb();
+  const db = await dbForQuoteToken(token);
+  if (!db) notFound();
   const q = db.quotes.find((x) => x.shareToken && x.shareToken === token);
   if (!q) notFound();
   return (

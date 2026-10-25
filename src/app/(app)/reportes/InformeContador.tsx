@@ -4,19 +4,22 @@ import { IconDownload, IconMail, IconWhatsApp } from "@/components/shared/icons"
 import { gmailLink, waLink } from "@/lib/contact";
 import { fdate, money, today } from "@/lib/format";
 import { buildInforme, informeToken, mesesDisponibles, monthLabel, validMes } from "@/modules/informe";
+import { activeProjectId, isSupabase } from "@/modules/repo/supabase";
 import type { Db } from "@/modules/types";
 import { Guide } from "@/components/ui/Guide";
 
 const btn = "inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md border px-3.5 text-sm font-medium transition";
 
 /** Informe mensual para la contadora o el contador: PDF descargable y mensaje listo para mandárselo por WhatsApp o correo. */
-export function InformeContador({ db, mes: mesParam, report, period }: { db: Db; mes: string; report: string; period: string }) {
+export async function InformeContador({ db, mes: mesParam, report, period }: { db: Db; mes: string; report: string; period: string }) {
   const meses = mesesDisponibles(today());
   const mes = validMes(mesParam) && meses.includes(mesParam) ? mesParam : meses[0];
   const d = buildInforme(db, mes, today());
   const c = db.settings.company ?? {};
   const base = (process.env.APP_BASE_URL ?? "").replace(/\/$/, "");
-  const link = `${base}/api/informe?mes=${mes}&t=${informeToken(mes)}`;
+  // El enlace lleva la empresa y su firma: la contadora lo abre sin iniciar sesión y solo ve el informe de esa empresa.
+  const pid = isSupabase() ? await activeProjectId() : undefined;
+  const link = `${base}/api/informe?mes=${mes}${pid ? `&p=${pid}` : ""}&t=${informeToken(mes, pid)}`;
   const first = (c.accountantName ?? "").split(" ")[0];
   const text = `Hola${first ? ` ${first}` : ""}! Te paso el informe de ventas y gastos de ${monthLabel(mes)} de ${db.settings.name}. Lo podés ver y descargar acá: ${link}\n\nCualquier duda avisame. Gracias!`;
   const wa = c.accountantPhone ? waLink(c.accountantPhone, text) : null;

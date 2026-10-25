@@ -1,7 +1,7 @@
 import { after } from "next/server";
 import { metaSignatureOk, metaVerify } from "@/lib/meta-webhook";
 import { addInboxMessage } from "@/modules/inbox";
-import { activeProjectId } from "@/modules/repo/supabase";
+import { projectForChannel } from "@/modules/channel-project";
 
 export const maxDuration = 60;
 
@@ -27,17 +27,21 @@ export async function POST(request: Request) {
   const payload = JSON.parse(raw || "{}") as R;
   after(async () => {
     try {
-      const projectId = await activeProjectId();
-      for (const entry of (payload.entry ?? []) as R[]) for (const ev of (entry.messaging ?? []) as R[]) {
-        const from = String(ev.sender?.id ?? "");
-        if (!from || from === String(entry.id) || ev.message?.is_echo || !ev.message) continue; // mensajes propios o sin contenido
-        const att = ((ev.message.attachments ?? []) as R[]).map((a) => `[${a.type === "image" ? "Imagen" : a.type === "video" ? "Video" : a.type === "audio" ? "Audio" : "Adjunto"}]`).join(" ");
-        const body = [String(ev.message.text ?? ""), att].filter(Boolean).join(" ") || "[Mensaje]";
-        const p = await profile(from);
-        await addInboxMessage(projectId, {
-          channel: "instagram", kind: "mensaje", externalId: from, name: p.name || (p.username ? `@${p.username}` : `Instagram ${from.slice(-6)}`),
-          handle: p.username ? `@${p.username}` : "", link: p.username ? `https://ig.me/m/${p.username}` : "https://www.instagram.com/direct/inbox/",
-        }, { id: String(ev.message.mid ?? `${ev.timestamp}`), direction: "in", body, at: new Date(Number(ev.timestamp) || Date.now()).toISOString() });
+      for (const entry of (payload.entry ?? []) as R[]) {
+        // El id de la entrada es el de la cuenta de Instagram que recibió el mensaje: define la empresa.
+        const projectId = await projectForChannel("instagram", [String(entry.id ?? "")]);
+        if (!projectId) { console.error(`[instagram] No se pudo identificar la empresa de la cuenta ${entry.id ?? "?"}: aviso descartado.`); continue; }
+        for (const ev of (entry.messaging ?? []) as R[]) {
+          const from = String(ev.sender?.id ?? "");
+          if (!from || from === String(entry.id) || ev.message?.is_echo || !ev.message) continue; // mensajes propios o sin contenido
+          const att = ((ev.message.attachments ?? []) as R[]).map((a) => `[${a.type === "image" ? "Imagen" : a.type === "video" ? "Video" : a.type === "audio" ? "Audio" : "Adjunto"}]`).join(" ");
+          const body = [String(ev.message.text ?? ""), att].filter(Boolean).join(" ") || "[Mensaje]";
+          const p = await profile(from);
+          await addInboxMessage(projectId, {
+            channel: "instagram", kind: "mensaje", externalId: from, name: p.name || (p.username ? `@${p.username}` : `Instagram ${from.slice(-6)}`),
+            handle: p.username ? `@${p.username}` : "", link: p.username ? `https://ig.me/m/${p.username}` : "https://www.instagram.com/direct/inbox/",
+          }, { id: String(ev.message.mid ?? `${ev.timestamp}`), direction: "in", body, at: new Date(Number(ev.timestamp) || Date.now()).toISOString() });
+        }
       }
     } catch (e) {
       console.error(`[instagram] ${(e as Error).message}`);

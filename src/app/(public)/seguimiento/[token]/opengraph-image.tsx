@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { brandColor, brandSoft } from "@/lib/brand";
-import { getDb } from "@/modules/data";
+import { dbForShipment } from "@/modules/public-db";
+import { shipmentIdFromToken } from "@/modules/seguimiento";
 
 export const dynamic = "force-dynamic";
 export const size = { width: 1200, height: 630 };
@@ -8,8 +9,9 @@ export const contentType = "image/png";
 export const alt = "Seguimiento de tu pedido";
 
 /** Imagen que se ve en la vista previa de WhatsApp: el logo de la empresa sobre fondo claro (no hay datos del pedido). */
-export default async function Image() {
-  const db = await getDb().catch(() => null);
+export default async function Image({ params }: { params: Promise<{ token: string }> }) {
+  const id = shipmentIdFromToken((await params).token);
+  const db = id ? await dbForShipment(id).catch(() => null) : null;
   const name = db?.settings.name ?? "Seguimiento de pedido";
   const logo = db?.settings.brand?.logoUrl ?? "";
   const accent = brandColor(db?.settings.brand);

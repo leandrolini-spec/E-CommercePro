@@ -1,7 +1,7 @@
 import { after } from "next/server";
 import { metaSignatureOk, metaVerify } from "@/lib/meta-webhook";
 import { addInboxMessage, customerByPhone } from "@/modules/inbox";
-import { activeProjectId } from "@/modules/repo/supabase";
+import { projectForChannel } from "@/modules/channel-project";
 
 export const maxDuration = 60;
 
@@ -32,9 +32,11 @@ export async function POST(request: Request) {
   const payload = JSON.parse(raw || "{}") as R;
   after(async () => {
     try {
-      const projectId = await activeProjectId();
       for (const entry of (payload.entry ?? []) as R[]) for (const ch of (entry.changes ?? []) as R[]) {
         const v = (ch.value ?? {}) as R;
+        // Cada aviso se asigna a la empresa dueña del número que lo recibió (id del número, o de la cuenta de WhatsApp Business).
+        const projectId = await projectForChannel("whatsapp", [String(v.metadata?.phone_number_id ?? ""), String(entry.id ?? "")]);
+        if (!projectId) { console.error(`[whatsapp] No se pudo identificar la empresa del número ${v.metadata?.phone_number_id ?? entry.id ?? "?"}: aviso descartado.`); continue; }
         const names = new Map(((v.contacts ?? []) as R[]).map((c) => [String(c.wa_id), String(c.profile?.name ?? "")]));
         for (const m of (v.messages ?? []) as R[]) {
           const phone = String(m.from ?? "");
