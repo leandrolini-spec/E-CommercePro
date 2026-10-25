@@ -4,7 +4,6 @@ const schema = z.object({
   SUPABASE_URL: z.string().url(),
   SUPABASE_ANON_KEY: z.string().min(1),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
-  APP_LOGIN_EMAIL: z.string().email(),
   CRON_SECRET: z.string().min(16),
   // Solo desarrollo: saltea el login para previsualizar la interfaz sin Supabase.
   DEV_BYPASS_AUTH: z.enum(["0", "1"]).default("0"),

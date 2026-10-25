@@ -7,6 +7,7 @@ import { Alert, Button, Field, Input } from "@/components/ui/primitives";
 
 export default function LoginPage() {
   const router = useRouter();
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -18,7 +19,7 @@ export default function LoginPage() {
     const res = await fetch("/api/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
+      body: JSON.stringify({ email, password }),
     });
     if (res.ok) {
       router.push("/");
@@ -40,15 +41,18 @@ export default function LoginPage() {
         <form onSubmit={onSubmit} className="w-full max-w-sm space-y-4 rounded-lg border border-line bg-surface p-6 shadow-xl lg:max-w-[22rem] lg:space-y-2 lg:px-3 lg:py-2.5 lg:[&_h1]:text-sm lg:[&_h1+p]:text-[11px] lg:[&_label]:text-[11px] lg:[&_input]:h-7 lg:[&_input]:px-2 lg:[&_input]:text-xs lg:[&_button]:h-7 lg:[&_button]:text-xs">
           <div>
             <h1 className="text-xl font-semibold">Gestión comercial</h1>
-            <p className="text-sm text-muted">Ingresá la contraseña del equipo</p>
+            <p className="text-sm text-muted">Ingresá con tu email y contraseña</p>
           </div>
           <div className="space-y-4 lg:flex lg:items-end lg:gap-3 lg:space-y-0">
-            <div className="lg:flex-1">
+            <div className="space-y-4 lg:flex-1 lg:space-y-2">
+              <Field label="Email">
+                <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoFocus autoComplete="username" inputMode="email" />
+              </Field>
               <Field label="Contraseña">
-                <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoFocus autoComplete="current-password" />
+                <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
               </Field>
             </div>
-            <Button type="submit" disabled={loading || !password} className="w-full lg:w-20 lg:px-2 lg:py-0">
+            <Button type="submit" disabled={loading || !email || !password} className="w-full lg:w-20 lg:px-2 lg:py-0">
               {loading ? "Ingresando…" : "Ingresar"}
             </Button>
           </div>
