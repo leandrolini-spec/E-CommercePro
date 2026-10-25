@@ -23,9 +23,9 @@ const loadCurrent = cache(async (): Promise<Db> => {
 });
 
 /** Descarta lo cacheado: se llama cuando algo escribe en la base por fuera de las pantallas (p. ej. la sincronización). */
-export async function invalidateDb() {
+export async function invalidateDb(projectId?: string) {
   if (!isSupabase()) return;
-  const id = await activeProjectId().catch(() => null);
+  const id = projectId ?? (await activeProjectId().catch(() => null));
   if (id) { forget(`db:${id}`); forgetSnapshot(id); }
 }
 

@@ -1,6 +1,9 @@
 // Repositorio Supabase. Solo se usa desde el servidor, con la clave de servicio.
 // Toda lectura y escritura va filtrada por project_id.
+import { cache } from "react";
 import { service } from "@/core/db-client";
+import { isAuthBypassed } from "@/core/env";
+import { currentCompany } from "@/core/membership";
 import { inAgenda } from "../customers";
 import type { Db } from "../types";
 
@@ -15,17 +18,34 @@ async function all<T = Record<string, unknown>>(table: string, projectId: string
   return (data ?? []) as T[];
 }
 
-/** Proyecto activo: por ahora el primero creado (el selector llega con la tarea T3). */
-// El proyecto activo casi nunca cambia: se guarda en memoria 10 minutos para no consultarlo en cada pantalla (antes eran varios viajes a la base por clic).
-let activeCache: { id: string; at: number } | null = null;
-export async function activeProjectId(): Promise<string> {
-  if (activeCache && Date.now() - activeCache.at < 600_000) return activeCache.id;
+/** La persona no tiene sesión, o su cuenta no tiene una empresa asignada. */
+export class CompanyError extends Error {
+  constructor(public reason: "no-session" | "no-company") {
+    super(reason === "no-company"
+      ? "Tu cuenta no tiene una empresa asignada. Pedile acceso a quien administra el sistema."
+      : "No hay una sesión iniciada.");
+  }
+}
+
+/** Primer proyecto creado. Solo para desarrollo con DEV_BYPASS_AUTH (sin login); nunca se usa en producción. */
+const devProjectId = cache(async (): Promise<string> => {
   const { data, error } = await service().from("projects").select("id").order("created_at").limit(1);
   if (error) throw new Error(`No se pudo leer projects: ${error.message}`);
-  if (!data?.length) throw new Error("No hay ningún proyecto en la base. Corré: npm run db:import");
-  activeCache = { id: data[0].id as string, at: Date.now() };
-  return activeCache.id;
-}
+  if (!data?.length) throw new Error("No hay ninguna empresa en la base. Creala con: npm run empresa:alta");
+  return data[0].id as string;
+});
+
+/**
+ * Empresa de quien hace el pedido, según su sesión. No se recuerda nada global: cada usuario tiene la suya.
+ * Solo sirve en pedidos con sesión (pantallas, acciones, rutas con login). Los procesos sin sesión
+ * (webhooks, tareas programadas) reciben el proyecto de forma explícita.
+ */
+export const activeProjectId = cache(async (): Promise<string> => {
+  if (isAuthBypassed()) return devProjectId();
+  const c = await currentCompany();
+  if (c.status !== "ok") throw new CompanyError(c.status);
+  return c.projectId;
+});
 
 type R = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 const n = (v: unknown) => Number(v ?? 0);
