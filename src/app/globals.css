@@ -60,11 +60,11 @@ main .grid > * { min-width: 0; }
 :root { --crm-accent: #16a34a; }
 main .rounded-lg.border:not(.border-dashed):not(.border-transparent),
 main details.rounded-lg {
-  border-color: var(--crm-accent); border-width: 1.5px;
-  box-shadow: 0 1px 3px color-mix(in srgb, var(--crm-accent) 22%, transparent);
+  border-color: color-mix(in srgb, var(--crm-accent) 42%, var(--color-line)); border-width: 1px;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--crm-accent) 10%, transparent);
 }
 main nav[aria-label] a, main nav[aria-label] button {
-  border-color: var(--crm-accent); border-width: 1.5px; border-style: solid;
+  border-color: color-mix(in srgb, var(--crm-accent) 50%, var(--color-line)); border-width: 1px; border-style: solid;
 }
 @media (max-width: 767px) {
   html, body { overflow-x: clip; max-width: 100%; }
