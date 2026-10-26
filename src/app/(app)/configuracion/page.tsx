@@ -225,7 +225,7 @@ export default async function ConfiguracionPage({ searchParams }: { searchParams
                   {b.logoUrl ? <img src={b.logoUrl} alt="Logo actual" className="max-h-full max-w-full object-contain" /> : <span className="px-2 text-center text-xs text-muted">Sin logo</span>}
                 </div>
                 <div className="space-y-2">
-                  <input type="file" name="logo" accept="image/png,image/jpeg,image/webp" className="block text-sm file:mr-3 file:rounded-md file:border file:border-line file:bg-surface file:px-3 file:py-1.5 file:text-sm file:font-medium hover:file:bg-bg" />
+                  <input type="file" name="logo" accept="image/png,image/jpeg,image/webp" className="block max-w-full text-sm max-md:w-full max-md:min-w-0 file:mr-3 file:rounded-md file:border file:border-line file:bg-surface file:px-3 file:py-1.5 file:text-sm file:font-medium hover:file:bg-bg" />
                   {b.logoUrl && <label className="flex items-center gap-2 text-sm text-muted"><input type="checkbox" name="removeLogo" value="1" className="h-4 w-4 accent-black" /> Quitar el logo actual</label>}
                 </div>
               </div>

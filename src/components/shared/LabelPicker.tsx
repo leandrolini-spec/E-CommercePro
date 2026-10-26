@@ -32,7 +32,7 @@ export function LabelPicker({ rows, stages, preselect }: { rows: LabelRow[]; sta
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar por nombre, dirección, localidad o número de compra" className="h-10 min-w-56 flex-1 rounded-md border border-line bg-surface px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-        <select value={stage} onChange={(e) => setStage(e.target.value)} className="h-10 rounded-md border border-line bg-surface px-3 text-sm">
+        <select value={stage} onChange={(e) => setStage(e.target.value)} className="h-10 min-w-0 max-w-full rounded-md border border-line bg-surface px-3 text-sm">
           <option value="">Etapa: todas</option>
           {stages.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
@@ -42,7 +42,7 @@ export function LabelPicker({ rows, stages, preselect }: { rows: LabelRow[]; sta
       <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3 shadow-sm">
         <label className="inline-flex items-center gap-2 text-sm font-medium"><input type="checkbox" checked={allShown} onChange={toggleAll} className="h-4 w-4 accent-black" />Elegir todos los que se ven ({shown.length})</label>
         <div className="flex flex-wrap items-center gap-2">
-          <select value={fmt} onChange={(e) => setFmt(e.target.value as "a4" | "10x15")} className="h-10 rounded-md border border-line bg-surface px-3 text-sm" aria-label="Formato de papel">
+          <select value={fmt} onChange={(e) => setFmt(e.target.value as "a4" | "10x15")} className="h-10 min-w-0 max-w-full rounded-md border border-line bg-surface px-3 text-sm" aria-label="Formato de papel">
             <option value="a4">Hoja A4 (4 por hoja)</option>
             <option value="10x15">Etiqueta 10 × 15 cm</option>
           </select>

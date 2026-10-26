@@ -130,7 +130,7 @@ export default async function ClientesPage({ searchParams }: PageProps<"/cliente
               {
                 key: "n", header: "Cliente", render: (c) => (
                   <div className="min-w-28">
-                    <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                    <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
                       <NameCardButton name={c.name} title={c.name}>
                         <div className="space-y-3">
                           <div className="flex flex-wrap items-center gap-2">
@@ -155,7 +155,7 @@ export default async function ClientesPage({ searchParams }: PageProps<"/cliente
                           </div>
                         </div>
                       </NameCardButton>
-                    </p>
+                    </div>
                     <p className="text-[11px] text-muted">{c.nickname ? `Usuario ML: ${c.nickname}` : c.company || "—"}</p>
                   </div>
                 ),
