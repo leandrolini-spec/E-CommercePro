@@ -1,5 +1,5 @@
 import { forget } from "@/lib/memo";
-import { inAgenda } from "@/modules/customers";
+import { inAgenda, looksLikeUser } from "@/modules/customers";
 import { isProductos, welcomeParts } from "@/modules/welcome";
 import { mlStageId } from "@/modules/shipments";
 import { sendPhoneAlert } from "@/modules/alerts";
@@ -432,27 +432,35 @@ export async function queueMissingBilling(projectId: string) {
 }
 
 const digitsOnly = (t: string) => t.replace(/\D/g, "");
+/** "JUAN PÉREZ" → "Juan Pérez": cada palabra con mayúscula inicial. */
+const titleCase = (t: string) => t.trim().split(/\s+/).filter(Boolean).map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
 
 /** Domicilio de facturación: la API lo entrega como lista de pares {type, value} (CITY_NAME, STREET_NAME…) o, en otras cuentas, como un objeto address. */
-function billingPlace(b: R): { address: string; city: string; doc: string } {
+function billingPlace(b: R): { address: string; city: string; doc: string; name: string } {
   const info = (b?.billing_info ?? b?.buyer?.billing_info ?? {}) as R;
   const kv = new Map<string, string>();
   for (const x of (info.additional_info ?? []) as R[]) if (x?.type && x?.value != null) kv.set(String(x.type), String(x.value).trim());
   const a = (info.address ?? b?.address ?? {}) as R;
+  // Nombre y apellido de facturación: es el nombre real del comprador (el usuario de Mercado Libre no lo es).
+  const name = titleCase([kv.get("FIRST_NAME"), kv.get("LAST_NAME")].filter(Boolean).join(" "));
   const street = [kv.get("STREET_NAME") ?? a.street_name, kv.get("STREET_NUMBER") ?? a.street_number].filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
   // El DNI del comprador (solo si el documento es un DNI): sirve para las etiquetas de Vía Cargo, Andreani y Correo.
   const rawDoc = String(info.doc_type ?? "").toUpperCase() === "DNI" ? digitsOnly(String(info.doc_number ?? "")) : "";
   const doc = rawDoc.length >= 7 && rawDoc.length <= 8 ? rawDoc : "";
-  if (!street) return { address: "", city: "", doc };
+  if (!street) return { address: "", city: "", doc, name };
   const zip = kv.get("ZIP_CODE") ?? a.zip_code;
   const extra = [kv.get("NEIGHBORHOOD") ?? a.neighborhood?.name, kv.get("COMMENT") ?? a.comment].filter(Boolean).join(" · ");
   const city = [kv.get("CITY_NAME") ?? a.city_name ?? a.city?.name, kv.get("STATE_NAME") ?? a.state?.name].filter(Boolean).join(", ");
-  return { address: [street, extra].filter(Boolean).join(" · ") + (zip ? ` (CP ${zip})` : ""), city, doc };
+  return { address: [street, extra].filter(Boolean).join(" · ") + (zip ? ` (CP ${zip})` : ""), city, doc, name };
 }
 
-/** Completa al comprador con el domicilio de facturación, solo en lo que le falte (dirección vacía; localidad vacía o "Sin dato"). */
-async function fillFromBilling(projectId: string, buyerId: string, place: { address: string; city: string; doc: string }) {
-  if (!place.address && !place.doc) return;
+/**
+ * Completa al comprador con los datos de facturación, solo en lo que le falte (dirección vacía; localidad vacía o "Sin dato").
+ * Si todavía figura con su usuario de Mercado Libre y la facturación trae nombre y apellido, pasa a su nombre real
+ * y el usuario queda guardado como apodo (no se pierde).
+ */
+async function fillFromBilling(projectId: string, buyerId: string, place: { address: string; city: string; doc: string; name: string }) {
+  if (!place.address && !place.doc && !place.name) return;
   const sb = service();
   const { data: c } = await sb.from("customers").select("*").eq("project_id", projectId).eq("id", `mlb_${buyerId}`).maybeSingle();
   if (!c) return;
@@ -460,6 +468,7 @@ async function fillFromBilling(projectId: string, buyerId: string, place: { addr
   if (!c.address && place.address) patch.address = place.address;
   if (!c.doc && place.doc) patch.doc = place.doc;
   if (place.city && (!c.city || c.city === "Sin dato")) patch.city = place.city;
+  if (place.name.split(" ").length >= 2 && looksLikeUser(c)) { patch.name = place.name; patch.nickname = c.name; }
   if (!Object.keys(patch).length) return;
   const next = { ...c, ...patch };
   patch.is_full = inAgenda({ name: next.name, phone: next.phone, address: next.address, agendaOff: next.agenda_off });
@@ -483,17 +492,17 @@ export async function applyStoredBilling(projectId: string) {
   const [{ data: bills }, { data: orders }, { data: custs }] = await Promise.all([
     sb.from("ml_resources").select("ml_id,data").eq("project_id", projectId).eq("kind", "billing").limit(5000),
     sb.from("ml_resources").select("ml_id,buyer:data->buyer").eq("project_id", projectId).eq("kind", "order").limit(5000),
-    sb.from("customers").select("id,address,city,doc").eq("project_id", projectId).like("id", "mlb_%").limit(5000),
+    sb.from("customers").select("id,name,nickname,address,city,doc").eq("project_id", projectId).like("id", "mlb_%").limit(5000),
   ]);
   const buyerOf = new Map((orders ?? []).map((o) => [String(o.ml_id), (o as unknown as { buyer?: R }).buyer?.id]));
   // Solo los que de verdad les falta algo: así la corrida es liviana aunque haya cientos de compradores.
-  const needs = new Set((custs ?? []).filter((c) => !c.address || !c.city || c.city === "Sin dato" || !c.doc).map((c) => String(c.id)));
+  const needs = new Set((custs ?? []).filter((c) => !c.address || !c.city || c.city === "Sin dato" || !c.doc || looksLikeUser(c)).map((c) => String(c.id)));
   let n = 0;
   for (const bl of bills ?? []) {
     const buyer = buyerOf.get(String(bl.ml_id));
     if (!buyer || !needs.has(`mlb_${buyer}`)) continue;
     const place = billingPlace(bl.data as R);
-    if (place.address || place.doc) { await fillFromBilling(projectId, String(buyer), place); n++; }
+    if (place.address || place.doc || place.name) { await fillFromBilling(projectId, String(buyer), place); n++; }
   }
   return n;
 }

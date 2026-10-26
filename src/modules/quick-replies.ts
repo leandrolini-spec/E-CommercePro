@@ -20,6 +20,12 @@ export const DEFAULT_QUICK: QuickReply[] = [
   { title: "Gracias", text: "Hola {nombre}! Muchas gracias por tu compra en {empresa}. Cualquier cosa, escribinos. ¡Saludos!" },
 ];
 
+/** Mercado Libre acepta 350 caracteres por mensaje: para mandar varios seguidos (hasta 3) se separan con una línea que diga solo "---". */
+export const MSG_SEP = "\n---\n";
+export const MAX_MSG = 350;
+export const MAX_MSGS = 3;
+export const splitMessages = (text: string): string[] => text.split(/\r?\n---\r?\n/).map((t) => t.trim()).filter(Boolean);
+
 export const quickRepliesOf = (company?: CompanyInfo): QuickReply[] => (company?.quickReplies?.length ? company.quickReplies : DEFAULT_QUICK);
 
 /** Reemplaza las variables con los datos del contacto y limpia los huecos ("Hola !" → "Hola!"). */
@@ -42,11 +48,15 @@ export function quickFromLines(raw: string): QuickReply[] {
     if (i < 1) throw new Error(`Cada línea va como "Título | texto". Revisá: ${l.slice(0, 40)}…`);
     const title = l.slice(0, i).trim(), text = l.slice(i + 1).trim().replace(/\\n/g, "\n");
     if (!title || !text) throw new Error(`Falta el título o el texto en: ${l.slice(0, 40)}…`);
-    if (text.length > 350) throw new Error(`"${title}" tiene ${text.length} caracteres: Mercado Libre acepta hasta 350.`);
+    const parts = splitMessages(text);
+    if (parts.length > MAX_MSGS) throw new Error(`"${title}" tiene ${parts.length} mensajes: se pueden mandar hasta ${MAX_MSGS} seguidos.`);
+    const long = parts.findIndex((m) => m.length > MAX_MSG);
+    if (long >= 0) throw new Error(`${parts.length > 1 ? `El mensaje ${long + 1} de "${title}"` : `"${title}"`} tiene ${parts[long].length} caracteres: Mercado Libre acepta hasta ${MAX_MSG} por mensaje.`);
     return { title, text };
   });
 }
 
 /** Respuestas rápidas para contestar una PREGUNTA de una publicación: las mismas de los mensajes, sin los saludos de bienvenida. */
 export const quickForQuestion = (company: CompanyInfo | undefined, empresa: string, v: { nombre?: string; productos?: string }): QuickReply[] =>
-  quickFor(company, empresa, v).filter((q) => !/^bienvenida/i.test(q.title));
+  // Las preguntas aceptan 2000 caracteres y se contestan con un solo texto: las partes se unen con una línea en blanco.
+  quickFor(company, empresa, v).filter((q) => !/^bienvenida/i.test(q.title)).map((q) => ({ title: q.title, text: splitMessages(q.text).join("\n\n") }));

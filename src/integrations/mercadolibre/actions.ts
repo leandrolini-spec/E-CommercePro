@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { hasValidSession } from "@/core/session";
+import { MAX_MSG, MAX_MSGS, splitMessages } from "@/modules/quick-replies";
 import { activeProjectId, service } from "@/modules/repo/supabase";
 import { MlError, mlPost } from "./client";
 import { conversationIdOf } from "./data";
@@ -122,20 +123,31 @@ export type ActionResult = void | { error: string };
 
 export async function replyToBuyer(packId: string, buyerId: string, fd: FormData): Promise<ActionResult> {
   if (!(await hasValidSession())) return { error: "No autorizado." };
-  const text = String(fd.get("text") ?? "").trim();
-  if (!text) return { error: "Escribí el mensaje." };
-  if (text.length > 350) return { error: `Mercado Libre acepta hasta 350 caracteres por mensaje (escribiste ${text.length}).` };
+  // Hasta 3 mensajes seguidos, separados por una línea que diga solo "---" (Mercado Libre acepta 350 caracteres por mensaje).
+  const parts = splitMessages(String(fd.get("text") ?? ""));
+  if (!parts.length) return { error: "Escribí el mensaje." };
+  if (parts.length > MAX_MSGS) return { error: `Se pueden mandar hasta ${MAX_MSGS} mensajes seguidos (escribiste ${parts.length}).` };
+  const tooLong = parts.findIndex((m) => m.length > MAX_MSG);
+  if (tooLong >= 0) return { error: `Mercado Libre acepta hasta ${MAX_MSG} caracteres por mensaje (${parts.length > 1 ? `el mensaje ${tooLong + 1} tiene` : "escribiste"} ${parts[tooLong].length}).` };
   const projectId = await activeProjectId();
   const { data: acc } = await service().from("ml_accounts").select("ml_user_id").eq("project_id", projectId).single();
   if (!acc) return { error: "Mercado Libre no está conectado." };
   const seller = String(acc.ml_user_id);
   // Si la compra es un pack (varias órdenes juntas), Mercado Libre pide el número del pack.
   packId = await conversationIdOf(projectId, packId);
-  try {
-    await mlPost(projectId, `/messages/packs/${packId}/sellers/${seller}`, { from: { user_id: seller }, to: { user_id: buyerId }, text }, { tag: "post_sale" });
-  } catch (e) { return { error: `Mercado Libre no aceptó el mensaje: ${friendly(e).message}` }; }
-  await processJob(projectId, "conversation", packId).catch(() => {});
-  revalidatePath("/mercadolibre");
+  let sent = 0;
+  let failure: string | null = null;
+  for (const text of parts) {
+    try {
+      await mlPost(projectId, `/messages/packs/${packId}/sellers/${seller}`, { from: { user_id: seller }, to: { user_id: buyerId }, text }, { tag: "post_sale" });
+      sent++;
+    } catch (e) { failure = friendly(e).message; break; }
+  }
+  if (sent) {
+    await processJob(projectId, "conversation", packId).catch(() => {});
+    revalidatePath("/mercadolibre");
+  }
+  if (failure) return { error: parts.length > 1 ? `Se mandaron ${sent} de ${parts.length}. Mercado Libre no aceptó el mensaje ${sent + 1}: ${failure}` : `Mercado Libre no aceptó el mensaje: ${failure}` };
 }
 
 /** Responde una pregunta de una publicación. */

@@ -142,7 +142,7 @@ export function NewBuyersTab({ db, channel, sp, messages = [] }: { db: Db; chann
                       fields={[
                       ...(convFor(s.mlOrderId).length ? [{ name: "conversacion", label: "Conversación hasta ahora", type: "textarea" as const, readOnly: true, rows: 10, defaultValue: convFor(s.mlOrderId).map((m) => `${m.fromBuyer ? shown : "Vos"} · ${dt(m.date)}\n${m.text || "(vacío o adjunto)"}`).join("\n\n") }] : []),
                       done
-                        ? { name: "text", label: "Tu mensaje por Mercado Libre (máximo 350 caracteres)", type: "textarea" as const, required: true, maxLength: 350, defaultValue: "", placeholder: "Escribí tu mensaje al comprador…", quick: quickFor(db.settings.company, db.settings.name, { nombre: realName, productos: prodsText(s) }) }
+                        ? { name: "text", label: "Tu mensaje por Mercado Libre (máximo 350 por mensaje; para mandar varios, separalos con una línea ---)", type: "textarea" as const, required: true, maxLength: 800, defaultValue: "", placeholder: "Escribí tu mensaje al comprador…", quick: quickFor(db.settings.company, db.settings.name, { nombre: realName, productos: prodsText(s) }) }
                         : { name: "bienvenida", label: "Se envían 3 mensajes seguidos por Mercado Libre", type: "textarea" as const, readOnly: true, rows: 16, defaultValue: welcomeParts(db.settings.company).map((m, k) => `Mensaje ${k + 1}\n${m}`).join("\n\n— — —\n\n"), help: "Pedido de datos, envíos en CABA y GBA, y envíos al interior." },
                     ]} />
                     );

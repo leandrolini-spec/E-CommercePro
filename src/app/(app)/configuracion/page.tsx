@@ -172,7 +172,7 @@ export default async function ConfiguracionPage({ searchParams }: { searchParams
           </form>
 
           <form action={saveQuickReplies}>
-            <Card title="Respuestas rápidas" subtitle="Mensajes ya armados para las mensajerías: aparecen como botones arriba del cuadro de texto y se completan con un clic. Una por línea, con el formato  Título | texto.  Variables: {nombre} {empresa} {productos}. Para un salto de línea escribí \n. Máximo 350 caracteres cada una (límite de Mercado Libre).">
+            <Card title="Respuestas rápidas" subtitle="Mensajes ya armados para las mensajerías: aparecen como botones arriba del cuadro de texto y se completan con un clic. Una por línea, con el formato  Título | texto.  Variables: {nombre} {empresa} {productos}. Para un salto de línea escribí \n. Máximo 350 caracteres por mensaje (límite de Mercado Libre); para mandar hasta 3 seguidos, separalos con una línea que diga solo ---  (escrita así:  \n---\n).">
               <textarea name="replies" rows={12} defaultValue={quickToLines(quickRepliesOf(db.settings.company))} className="w-full rounded-md border border-line bg-surface px-3 py-2 font-mono text-xs text-ink focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
             </Card>
             <div className="mt-4"><SaveButton /></div>

@@ -256,7 +256,7 @@ export default async function EnviosPage({ searchParams }: { searchParams: Promi
                                       className="h-9 w-full justify-center gap-2 border-[#e6cf00]! bg-[#ffe600]! px-3 py-0 text-sm font-medium text-[#2d3277]! hover:bg-[#f5d800]!"
                                       fields={[
                                         ...(conv.length ? [{ name: "conversacion", label: "Conversación hasta ahora", type: "textarea" as const, readOnly: true, rows: 9, defaultValue: conv.map((m) => `${m.fromBuyer ? (customerOf(x) || "Comprador") : "Vos"} · ${new Date(m.date).toLocaleString("es-AR", { timeZone: "America/Argentina/Buenos_Aires", dateStyle: "short", timeStyle: "short" })}\n${m.text || "(vacío o adjunto)"}`).join("\n\n") }] : []),
-                                        { name: "text", label: "Tu mensaje (máximo 350 caracteres)", type: "textarea" as const, required: true, maxLength: 350, placeholder: "Escribí tu mensaje al comprador…", quick: quickFor(db.settings.company, db.settings.name, { nombre: customerOf(x), productos: x.items }) },
+                                        { name: "text", label: "Tu mensaje (máximo 350 por mensaje; para mandar varios, separalos con una línea ---)", type: "textarea" as const, required: true, maxLength: 800, placeholder: "Escribí tu mensaje al comprador…", quick: quickFor(db.settings.company, db.settings.name, { nombre: customerOf(x), productos: x.items }) },
                                       ]} />
                                   );
                                 }
@@ -273,8 +273,8 @@ export default async function EnviosPage({ searchParams }: { searchParams: Promi
                                   : <span title={!plant ? "Este pedido no es de productos" : "Falta el WhatsApp del productor: cargalo en Proveedores (proveedor Productor)"} className="inline-flex h-9 w-full cursor-not-allowed items-center justify-center gap-2 rounded-md border border-line bg-bg px-3 text-sm font-medium text-muted/70"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5 shrink-0" aria-hidden><path d="M4 16c0-7 4-11 12-12 0 8-4 12-11 12M4 16c2-3 4-5 7-7" /></svg>Pedido al productor</span>;
                               })()}
                             </div>
-                            <div className="mt-2 flex items-stretch gap-1.5 border-t border-line pt-2 max-md:flex-wrap">
-                              <div className="max-md:order-3 max-md:flex-1 max-md:basis-[calc(33.3%-0.25rem)] max-md:[&>*]:w-full">
+                            <div className="mt-2 flex items-stretch gap-1.5 border-t border-line pt-2 flex-wrap">
+                              <div className="order-3 flex-1 basis-[calc(33.3%-0.25rem)] [&>*]:w-full [&_button]:w-full">
                               <InfoCardButton title={customerOf(x) || "Envío"} label="Ver el detalle del pedido" large>
                                 <div className="max-h-[70vh] space-y-4 overflow-y-auto pr-1">
                                   <div className="flex flex-wrap items-center gap-2">
@@ -323,14 +323,14 @@ export default async function EnviosPage({ searchParams }: { searchParams: Promi
                                 </div>
                               </InfoCardButton>
                               </div>
-                              <div className={ci > 0 && columns[ci - 1].id !== "__sin" ? "max-md:order-1 max-md:[&>form>button]:h-11 max-md:[&>form>button]:w-11" : "hidden"}>{ci > 0 && columns[ci - 1].id !== "__sin" && (<ActionButton action={moveShipment.bind(null, x.id, columns[ci - 1].id)} label={`Volver a ${columns[ci - 1].name}`} iconOnly icon={<IconArrowLeft />} />)}</div>
-                              <div className={`flex min-w-0 flex-1 max-md:order-2 max-md:[&>*]:min-w-0 ${ci > 0 && columns[ci - 1].id !== "__sin" ? "max-md:basis-[calc(100%-3.25rem)]" : "max-md:basis-full"} max-md:[&_button]:h-11 max-md:[&_button]:text-base`}>
+                              <div className={ci > 0 && columns[ci - 1].id !== "__sin" ? "order-1 [&>form>button]:h-9 [&>form>button]:w-9" : "hidden"}>{ci > 0 && columns[ci - 1].id !== "__sin" && (<ActionButton action={moveShipment.bind(null, x.id, columns[ci - 1].id)} label={`Volver a ${columns[ci - 1].name}`} iconOnly icon={<IconArrowLeft />} />)}</div>
+                              <div className={`order-2 flex min-w-0 flex-1 [&>*]:min-w-0 ${ci > 0 && columns[ci - 1].id !== "__sin" ? "basis-[calc(100%-3.25rem)]" : "basis-full"} [&_button]:h-auto [&_button]:min-h-9 [&_button]:w-full [&_button]:whitespace-normal [&_button]:px-2 [&_button]:py-1.5 [&_button]:text-center [&_button]:text-xs [&_button]:leading-tight`}>
                               {ci < columns.length - 1 && columns[ci + 1].id !== "__sin" ? (
                                 <ActionButton action={moveShipment.bind(null, x.id, columns[ci + 1].id)} label={`${columns[ci + 1].name} →`} variant="primary" tall block />
                               ) : <div className="flex-1" />}
                               </div>
-                              <div className="max-md:order-4 max-md:flex-1 max-md:basis-[calc(33.3%-0.25rem)] max-md:[&>*]:w-full"><CreateDrawer buttonLabel="Editar" iconOnly icon={<IconPencil />} variant="secondary" title={`Envío de ${customerOf(x) || "cliente"}`} action={updateShipment.bind(null, x.id)} fields={fields(x)} /></div>
-                              <div className="max-md:order-5 max-md:flex-1 max-md:basis-[calc(33.3%-0.25rem)] max-md:[&>*]:w-full"><ConfirmActionButton action={deleteShipment.bind(null, x.id)} label="Eliminar envío" message={`¿Eliminar el envío de ${customerOf(x) || "este cliente"}? Esta acción no se puede deshacer.`} icon tall /></div>
+                              <div className="order-4 flex-1 basis-[calc(33.3%-0.25rem)] [&>*]:w-full [&_button]:w-full"><CreateDrawer buttonLabel="Editar" iconOnly icon={<IconPencil />} variant="secondary" title={`Envío de ${customerOf(x) || "cliente"}`} action={updateShipment.bind(null, x.id)} fields={fields(x)} /></div>
+                              <div className="order-5 flex-1 basis-[calc(33.3%-0.25rem)] [&>*]:w-full [&_button]:w-full"><ConfirmActionButton action={deleteShipment.bind(null, x.id)} label="Eliminar envío" message={`¿Eliminar el envío de ${customerOf(x) || "este cliente"}? Esta acción no se puede deshacer.`} icon tall /></div>
                             </div>
                           </>
                         );

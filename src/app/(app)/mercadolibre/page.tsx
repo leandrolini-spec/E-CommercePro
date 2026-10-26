@@ -542,7 +542,7 @@ function MessagesTab({ sp, data, db }: { sp: SearchParams; data: Data; db: Db })
                 buttonLabel="Responder" variant={c.myTurn ? "primary" : "secondary"} title={`Responder a ${nameOf(c.buyerId)}`} action={replyToBuyer.bind(null, c.orderId, c.buyerId)}
                 fields={[
                   { name: "ultimo", label: "Último mensaje", defaultValue: preview(c.last.text), type: "textarea", readOnly: true },
-                  { name: "text", label: "Tu respuesta (máximo 350 caracteres)", type: "textarea", required: true, maxLength: 350, placeholder: "Escribí tu respuesta…" },
+                  { name: "text", label: "Tu respuesta (máximo 350 por mensaje; para mandar varios, separalos con una línea ---)", type: "textarea", required: true, maxLength: 800, placeholder: "Escribí tu respuesta…" },
                 ]}
               />
             ),
