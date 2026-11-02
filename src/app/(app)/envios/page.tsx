@@ -10,7 +10,7 @@ import { quickFor } from "@/modules/quick-replies";
 import { CARRIERS, carrierColor, carrierName, carrierOf, isExternal, isOwn } from "@/modules/carriers";
 import { ConfirmActionButton } from "@/components/shared/ConfirmActionButton";
 import { InfoCardButton } from "@/components/shared/InfoCardButton";
-import { IconArrowLeft, IconPencil } from "@/components/shared/icons";
+import { IconArrowLeft, IconPencil, IconWhatsApp } from "@/components/shared/icons";
 import { CreateDrawer } from "@/components/shared/CreateDrawer";
 import { ActionButton, Filters, matches, PageHeader, param, type SearchParams } from "@/components/shared/list";
 import { DataTable } from "@/components/ui/DataTable";
@@ -116,6 +116,9 @@ export default async function EnviosPage({ searchParams }: { searchParams: Promi
   // Pedidos de productos paral productor: nombre de la persona y su encargo.
   const toGrower = (x: Shipment): GrowerOrder => ({ name: customerOf(x), items: x.items, orderRef: x.orderRef, channel: x.channel, entrega: isExternal(x.carrier) ? "" : entregaLabel(etaOf(x)), notes: x.notes });
   const growerOrders = everything.filter((x) => ["compra", "preparado", "empaquetado"].includes(x.stage) && isProductosOrder(x.items)).map(toGrower);
+  // Botón por etapa (Compra y Preparado): manda al productor los pedidos de productos que están en esa columna.
+  const grower = findGrower(db);
+  const GROWER_STAGES = ["compra", "preparado"];
   // El chofer solo existe en reparto propio: con Logística o Vía Cargo no se sabe (ni se dice) quién entrega.
   const ownDelivery = (x: Shipment) => isOwn(x.carrier);
   const messageFor = (x: Shipment) => {
@@ -204,6 +207,15 @@ export default async function EnviosPage({ searchParams }: { searchParams: Promi
                   <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full" style={{ background: col.color }} aria-hidden />{col.name}</span>
                   <span className="flex items-center gap-1.5">
                     {cards.length > 0 && <Link href={`/etiquetas?stage=${col.id}`} title={`Imprimir las etiquetas de ${col.name}`} aria-label={`Imprimir las etiquetas de ${col.name}`} className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-line bg-surface text-muted hover:text-ink"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden><path d="M6 7V3h8v4M6 14H4.5A1.5 1.5 0 0 1 3 12.5v-4A1.5 1.5 0 0 1 4.5 7h11A1.5 1.5 0 0 1 17 8.5v4a1.5 1.5 0 0 1-1.5 1.5H14M6 11h8v6H6z" /></svg></Link>}
+                    {GROWER_STAGES.includes(col.id) && (() => {
+                      const orders = cards.filter((x) => isProductosOrder(x.items)).map(toGrower);
+                      if (!orders.length) return null;
+                      const wa = grower?.phone ? waLink(grower.phone, growerMessage(orders, grower.name)) : null;
+                      const cls = "inline-flex h-7 items-center justify-center gap-1 rounded-md border px-1.5 text-xs font-medium";
+                      return wa
+                        ? <a href={wa} target="_blank" rel="noreferrer" title={`Mandar al productor los pedidos de productos de ${col.name} (${orders.length})`} aria-label={`Mandar al productor los pedidos de ${col.name}`} className={`${cls} border-[#16a34a]/40 bg-[#16a34a] text-white hover:bg-[#15803d]`}><IconWhatsApp />{orders.length}</a>
+                        : <span title="Falta el WhatsApp del productor: cargalo en Proveedores" className={`${cls} cursor-not-allowed border-line bg-bg text-muted/60`}><IconWhatsApp />{orders.length}</span>;
+                    })()}
                     <Badge>{cards.length}</Badge>
                   </span>
                 </h2>
