@@ -56,7 +56,23 @@ export function quickFromLines(raw: string): QuickReply[] {
   });
 }
 
-/** Respuestas rápidas para contestar una PREGUNTA de una publicación: las mismas de los mensajes, sin los saludos de bienvenida. */
+/** Respuestas para las preguntas frecuentes: una por línea, "Título | texto" (las preguntas aceptan hasta 2000 caracteres). */
+export function questionFromLines(raw: string): QuickReply[] {
+  return raw.split("\n").map((l) => l.trim()).filter(Boolean).map((l) => {
+    const i = l.indexOf("|");
+    if (i < 1) throw new Error(`Cada línea va como "Título | texto". Revisá: ${l.slice(0, 40)}…`);
+    const title = l.slice(0, i).trim(), text = l.slice(i + 1).trim().replace(/\\n/g, "\n");
+    if (!title || !text) throw new Error(`Falta el título o el texto en: ${l.slice(0, 40)}…`);
+    if (text.length > 2000) throw new Error(`"${title}" tiene ${text.length} caracteres: una respuesta a una pregunta acepta hasta 2000.`);
+    return { title, text };
+  });
+}
+
+/**
+ * Respuestas rápidas para contestar una PREGUNTA de una publicación: primero las frecuentes que cargó el negocio (Configuración → Respuestas
+ * para preguntas), después las mismas de los mensajes, sin los saludos de bienvenida.
+ */
 export const quickForQuestion = (company: CompanyInfo | undefined, empresa: string, v: { nombre?: string; productos?: string }): QuickReply[] =>
   // Las preguntas aceptan 2000 caracteres y se contestan con un solo texto: las partes se unen con una línea en blanco.
-  quickFor(company, empresa, v).filter((q) => !/^bienvenida/i.test(q.title)).map((q) => ({ title: q.title, text: splitMessages(q.text).join("\n\n") }));
+  [...(company?.questionReplies ?? []).map((q) => ({ ...q, text: fillQuick(q.text, { ...v, empresa }) })),
+    ...quickFor(company, empresa, v).filter((q) => !/^bienvenida/i.test(q.title)).map((q) => ({ title: q.title, text: splitMessages(q.text).join("\n\n") }))];

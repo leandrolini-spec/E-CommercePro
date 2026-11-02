@@ -142,6 +142,27 @@ export type CompanyInfo = {
   integrationsOff?: string[];
   /** Respuestas rápidas para las mensajerías (si está vacío se usan las que vienen armadas). */
   quickReplies?: { title: string; text: string }[];
+  /** Respuestas para las preguntas más frecuentes de las publicaciones (solo aparecen al contestar una pregunta). Vacío = ninguna. */
+  questionReplies?: { title: string; text: string }[];
+  /**
+   * Respuesta automática de preguntas de Mercado Libre. Apagada por defecto: se prende a mano desde la configuración.
+   * Contesta solo con los textos que carga el negocio; si no está seguro, no contesta y avisa al celular.
+   */
+  preguntasAuto?: {
+    activo?: boolean;
+    /** Si tiene ids de publicaciones de Mercado Libre, solo contesta las preguntas de esas (prueba controlada). Vacío = todas. */
+    publicaciones?: string[];
+    /** Texto de cada tipo de pregunta (clave = tipo, ver question-bot). Un tipo sin texto no se contesta. */
+    textos?: Record<string, string>;
+    /** Encabezado y cierre de cada respuesta (p. ej. "¡Hola! Somos X." / "¡Gracias por escribirnos!"). */
+    saludo?: string; despedida?: string;
+    /** Localidades o partidos con envío gratis (se usan para confirmar una zona puntual). */
+    zonasGratis?: string[];
+    /** Usar IA (necesita ANTHROPIC_API_KEY) para las preguntas que las reglas no cubren; contesta solo con `politica` y los textos. */
+    ia?: boolean;
+    /** Política del negocio en texto libre (envíos, horarios, facturación…): lo único que la IA puede afirmar. */
+    politica?: string;
+  };
 };
 /** Marca: logo y estilo que se ven en el menú y en los presupuestos. */
 export type BrandInfo = { logoUrl?: string; tagline?: string; color?: string; color2?: string; quoteFooter?: string; fontTitle?: string; fontSubtitle?: string; fontText?: string };

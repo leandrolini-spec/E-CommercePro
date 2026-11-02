@@ -5,6 +5,8 @@ import { mlStageId } from "@/modules/shipments";
 import { sendPhoneAlert } from "@/modules/alerts";
 import { doneKey, isCourtesy, mlQuestionKey } from "@/modules/message-reads";
 import { service } from "@/modules/repo/supabase";
+import { resolveAnswer } from "@/modules/question-ai";
+import type { CompanyInfo } from "@/modules/types";
 import { mlGet, mlPost, MlError } from "./client";
 import { getAccessToken } from "./oauth";
 import { conversationIdOf } from "./data";
@@ -532,6 +534,56 @@ async function processShipment(projectId: string, id: string) {
   await sb.from("customers").update(patch).eq("project_id", projectId).eq("id", `mlb_${rid}`);
 }
 
+/**
+ * Contesta sola una pregunta nueva si la respuesta automática está prendida (apagada por defecto) y hay un texto seguro para ella.
+ * Devuelve true si ya se ocupó (la contestó, o avisó al celular que no pudo): en ese caso no sale además el aviso común de pregunta nueva.
+ */
+async function autoAnswerQuestion(projectId: string, q: R): Promise<boolean> {
+  const sb = service();
+  const { data: st } = await sb.from("project_settings").select("company").eq("project_id", projectId).single();
+  const cfg = (st?.company as R | null)?.preguntasAuto as NonNullable<CompanyInfo["preguntasAuto"]> | undefined;
+  if (!cfg?.activo) return false;
+  if (cfg.publicaciones?.length && !cfg.publicaciones.includes(String(q.item_id))) return false; // prueba controlada: solo las publicaciones elegidas
+  const { data: it } = await sb.from("ml_resources").select("title:data->>title").eq("project_id", projectId).eq("kind", "item").eq("ml_id", String(q.item_id)).maybeSingle();
+  const title = (it as { title?: string } | null)?.title ?? "";
+  const alert = (t: string, m: string) => sendPhoneAlert(projectId, { title: t, message: m, priority: 5 }).catch(() => false);
+  // Si el mismo comprador ya preguntó en los últimos 7 días, es una charla en curso: se la deja a una persona.
+  const buyer = (q.from as R | undefined)?.id;
+  if (buyer) {
+    const since = new Date(Date.now() - 7 * 86400_000).toISOString();
+    const { data: prev } = await sb.from("ml_resources").select("ml_id").eq("project_id", projectId).eq("kind", "question").eq("data->from->>id", String(buyer)).neq("ml_id", String(q.id)).gte("data->>date_created", since).limit(1);
+    if (prev?.length) {
+      await alert("Pregunta que no pude responder sola", `Es una charla en curso con el mismo comprador: respondela vos.\n"${String(q.text ?? "").slice(0, 140)}"`);
+      return true;
+    }
+  }
+  // Se reserva la pregunta ANTES de contestar: dos sincronizaciones a la vez no la responden dos veces.
+  const claim = `auto:${q.id}`;
+  const { error: taken } = await sb.from("message_reads").insert({ project_id: projectId, key: claim });
+  if (taken) return true;
+  let a: { category: string; text: string } | null = null;
+  try {
+    const { data: proj } = await sb.from("projects").select("name").eq("id", projectId).single();
+    a = await resolveAnswer(String(q.text ?? ""), title, cfg, String(proj?.name ?? ""));
+  } catch (e) {
+    // La IA falló (sin crédito, sin clave): se avisa y la pregunta queda para una persona.
+    await alert("Falló la IA de respuestas", `No se pudo usar la IA (${(e as Error).message}). Las preguntas quedan para vos.`);
+  }
+  if (!a) {
+    // No está seguro: no contesta y avisa al celular para que la responda una persona.
+    await alert("Pregunta que no pude responder sola", `${title || "Una publicación"}\n"${String(q.text ?? "").slice(0, 140)}"\nNo estuve seguro de la respuesta: respondela vos.`);
+    return true;
+  }
+  try {
+    await mlPost(projectId, "/answers", { question_id: Number(q.id), text: a.text });
+  } catch (e) {
+    await sb.from("message_reads").delete().eq("project_id", projectId).eq("key", claim); // no salió: se libera para el aviso común
+    throw e;
+  }
+  await sb.from("sync_logs").insert({ project_id: projectId, kind: "respuesta-auto", started_at: new Date().toISOString(), finished_at: new Date().toISOString(), processed: 1, errors: 0, detail: { pregunta: q.id, categoria: a.category, respuesta: a.text } }).then(() => {}, () => {});
+  return true;
+}
+
 export async function processJob(projectId: string, topic: string, resource: string) {
   const { mlUserId } = await getAccessToken(projectId);
 
@@ -603,6 +655,11 @@ export async function processJob(projectId: string, topic: string, resource: str
       const q = await mlGet<R>(projectId, `/questions/${id}`);
       const { data: had } = await service().from("ml_resources").select("ml_id").eq("project_id", projectId).eq("kind", "question").eq("ml_id", id).maybeSingle();
       await saveResource(projectId, "question", id, q);
+      // Respuesta automática (solo si está prendida): contesta lo que tiene un texto seguro y deja el resto para una persona.
+      if (!had && q.status === "UNANSWERED" && Date.now() - new Date(String(q.date_created)).getTime() < 3 * 3600_000) {
+        const handled = await autoAnswerQuestion(projectId, q).catch(() => false);
+        if (handled) return;
+      }
       // Pregunta nueva sin responder (de las últimas 3 horas: no se avisa de lo viejo que entra al sincronizar): aviso al celular del negocio.
       if (!had && q.status === "UNANSWERED" && Date.now() - new Date(String(q.date_created)).getTime() < 3 * 3600_000) {
         const { data: it } = await service().from("ml_resources").select("title:data->>title").eq("project_id", projectId).eq("kind", "item").eq("ml_id", String(q.item_id)).maybeSingle();

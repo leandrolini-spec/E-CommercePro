@@ -1,6 +1,8 @@
 "use server";
 
-import { quickFromLines } from "./quick-replies";
+import { quickFromLines, questionFromLines } from "./quick-replies";
+import { hasContactData } from "./question-ai";
+import { isTextKey } from "./question-bot";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { hasValidSession } from "@/core/session";
@@ -130,6 +132,52 @@ export async function saveQuickReplies(fd: FormData) {
   db.settings.company = { ...db.settings.company, quickReplies: list };
   await persist(db);
   for (const path of ["/configuracion", "/envios", "/clientes", "/ventas", "/mensajes"]) revalidatePath(path);
+}
+
+/** Respuestas para las preguntas frecuentes de las publicaciones: una por línea, "Título | texto". Vacío = ninguna. */
+export async function saveQuestionReplies(fd: FormData) {
+  if (!(await hasValidSession())) throw new Error("No autorizado.");
+  const list = questionFromLines(String(fd.get("replies") ?? ""));
+  const bad = list.find((q) => hasContactData(q.text));
+  if (bad) throw new Error(`"${bad.title}" tiene un mail, un link o un número de teléfono: Mercado Libre no permite pasar datos de contacto en las respuestas.`);
+  const db = await getDb();
+  db.settings.company = { ...db.settings.company, questionReplies: list };
+  await persist(db);
+  for (const path of ["/configuracion", "/mercadolibre", "/mensajes"]) revalidatePath(path);
+}
+
+const csv = (raw: string) => raw.split(/[,\n]/).map((x) => x.trim()).filter(Boolean);
+
+/**
+ * Respuestas automáticas de preguntas de Mercado Libre. Los textos van uno por línea como "tipo | texto" (ver question-bot: TEXT_KEYS).
+ * Se guarda todo junto, pero el interruptor "Activar" es lo único que las prende: por defecto están apagadas.
+ */
+export async function saveQuestionAuto(fd: FormData) {
+  if (!(await hasValidSession())) throw new Error("No autorizado.");
+  const textos: Record<string, string> = {};
+  for (const l of String(fd.get("textos") ?? "").split("\n").map((x) => x.trim()).filter(Boolean)) {
+    const i = l.indexOf("|");
+    const key = l.slice(0, i).trim(), text = l.slice(i + 1).trim().replace(/\\n/g, "\n");
+    if (i < 1 || !isTextKey(key)) throw new Error(`Cada línea va como "tipo | texto" con un tipo de la lista. Revisá: ${l.slice(0, 40)}…`);
+    if (!text) throw new Error(`Falta el texto de "${key}".`);
+    if (text.length > 900) throw new Error(`El texto de "${key}" tiene ${text.length} caracteres: usá hasta 900.`);
+    if (hasContactData(text)) throw new Error(`El texto de "${key}" tiene un mail, un link o un número de teléfono: Mercado Libre no permite pasar datos de contacto en las respuestas.`);
+    textos[key] = text;
+  }
+  const saludo = str(fd, "saludo"), despedida = str(fd, "despedida"), politica = str(fd, "politica");
+  if ([saludo, despedida].some((t) => t.length > 120)) throw new Error("El saludo y el cierre pueden tener hasta 120 caracteres.");
+  if (politica.length > 3000) throw new Error("La política del negocio puede tener hasta 3000 caracteres.");
+  const publicaciones = csv(str(fd, "publicaciones")).map((x) => x.replace(/^MLA-?/i, "MLA"));
+  const db = await getDb();
+  db.settings.company = {
+    ...db.settings.company,
+    preguntasAuto: {
+      activo: fd.get("activo") === "1", ia: fd.get("ia") === "1",
+      publicaciones, textos, saludo, despedida, politica, zonasGratis: csv(str(fd, "zonasGratis")),
+    },
+  };
+  await persist(db);
+  for (const path of ["/configuracion", "/mercadolibre", "/mensajes"]) revalidatePath(path);
 }
 
 /** Activa o desactiva una integración para este negocio (cada cliente usa solo las suyas). */
