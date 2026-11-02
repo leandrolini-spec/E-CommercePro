@@ -140,6 +140,8 @@ export type CompanyInfo = {
   welcomeAuto?: boolean;
   /** Integraciones que este negocio no usa (se ocultan del menú y figuran como desactivadas). Ej: "mercadolibre", "tiendanube". */
   integrationsOff?: string[];
+  /** Envíos de Mercado Libre que se borraron a mano: la sincronización no los vuelve a crear. */
+  deletedShipments?: string[];
   /** Respuestas rápidas para las mensajerías (si está vacío se usan las que vienen armadas). */
   quickReplies?: { title: string; text: string }[];
   /** Respuestas para las preguntas más frecuentes de las publicaciones (solo aparecen al contestar una pregunta). Vacío = ninguna. */

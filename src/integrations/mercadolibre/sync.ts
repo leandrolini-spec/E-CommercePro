@@ -314,6 +314,12 @@ const PROVINCES: Record<string, string> = { A: "Salta", B: "Buenos Aires", C: "C
 
 const idOf = (resource: string) => resource.split("/").filter(Boolean).pop() ?? resource;
 
+/** Ids de envíos que se borraron a mano desde Envíos: no se vuelven a crear. */
+async function deletedShipmentIds(projectId: string): Promise<Set<string>> {
+  const { data } = await service().from("project_settings").select("company").eq("project_id", projectId).single();
+  return new Set(((data?.company as R | null)?.deletedShipments ?? []) as string[]);
+}
+
 /** Cada compra nueva entra sola al seguimiento, en la primera etapa (Compra). Los datos de entrega llegan después con el envío de ML. */
 async function createShipmentsForSales(projectId: string, sales: R[], orders: R[]) {
   if (!sales.length) return;
@@ -336,7 +342,9 @@ async function createShipmentsForSales(projectId: string, sales: R[], orders: R[
       ...(s.status === "entregado" ? { delivered_at: s.date } : {}),
     };
   });
-  for (let i = 0; i < rows.length; i += 100) await sb.from("shipments").upsert(rows.slice(i, i + 100), { onConflict: "id", ignoreDuplicates: true });
+  const gone = await deletedShipmentIds(projectId);
+  const keep = rows.filter((r) => !gone.has(r.id));
+  for (let i = 0; i < keep.length; i += 100) await sb.from("shipments").upsert(keep.slice(i, i + 100), { onConflict: "id", ignoreDuplicates: true });
 }
 
 /**
@@ -389,6 +397,7 @@ async function upsertShipment(projectId: string, s: R) {
   const city = [a.city?.name, a.state?.name].filter(Boolean).join(", ");
   const { data: ex } = await sb.from("shipments").select("*").eq("id", id).maybeSingle();
   if (!ex) {
+    if ((await deletedShipmentIds(projectId)).has(id)) return;
     await sb.from("shipments").insert({
       id, project_id: projectId, sale_id: sale?.id ?? (orderId ? `ml_${orderId}` : null), order_ref: orderId, channel: "Mercado Libre", customer: String(a.receiver_name ?? ""),
       phone: String(a.receiver_phone ?? ""), address, city, zip: String(a.zip_code ?? ""), items, tracking: String(s.tracking_number ?? ""), stage,
@@ -415,7 +424,8 @@ export async function queueMissingShipments(projectId: string) {
     sb.from("shipments").select("ml_shipment_id").eq("project_id", projectId).not("ml_shipment_id", "is", null).limit(5000),
   ]);
   const got = new Set((have ?? []).map((x) => String(x.ml_shipment_id)));
-  const missing = [...new Set((orders ?? []).map((o) => (o.data as R)?.shipping?.id).filter(Boolean).map(String))].filter((id) => !got.has(id));
+  const gone = await deletedShipmentIds(projectId);
+  const missing = [...new Set((orders ?? []).map((o) => (o.data as R)?.shipping?.id).filter(Boolean).map(String))].filter((id) => !got.has(id) && !gone.has(`ml_${id}`));
   if (missing.length) await enqueueMany(projectId, "shipments", missing.map((id) => `/shipments/${id}`));
   return missing.length;
 }

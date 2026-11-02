@@ -910,6 +910,11 @@ export async function moveShipment(id: string, stage: string) {
 
 export async function deleteShipment(id: string) {
   const db = await getDb();
+  // Un envío que viene de Mercado Libre se anota como borrado, si no la sincronización lo vuelve a crear.
+  if (id.startsWith("ml_")) {
+    const company = (db.settings.company ??= {});
+    company.deletedShipments = [...new Set([...(company.deletedShipments ?? []), id])];
+  }
   db.shipments = (db.shipments ?? []).filter((s) => s.id !== id);
   if (isSupabase()) {
     const { activeProjectId } = await import("./repo/supabase");
