@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { PageHeader, param, type SearchParams } from "@/components/shared/list";
+import { MonthPicker } from "@/components/shared/MonthPicker";
 import { Chart } from "@/components/ui/Chart";
 import { Guide } from "@/components/ui/Guide";
 import { Badge, EmptyState, KpiCard } from "@/components/ui/primitives";
-import { fdate, int, money, pct } from "@/lib/format";
+import { fdate, int, money, pct, today } from "@/lib/format";
 import { SOCIEDAD_DESDE, sociedadDb, alerts, byChannel, byProduct, costCoverage, dailySeries, kpis, PERIODS, periodRange, salesByPlace, topWithOthers, type Period } from "@/modules/calc";
 import { mlData } from "@/integrations/mercadolibre/data";
 import { mlAlerts } from "@/integrations/mercadolibre/status";
@@ -13,7 +14,12 @@ import { activeProjectId, isSupabase } from "@/modules/repo/supabase";
 export default async function DashboardPage({ searchParams }: PageProps<"/">) {
   const sp = (await searchParams) as SearchParams;
   const period = (PERIODS.find((p) => p.value === param(sp, "p"))?.value ?? "hoy") as Period;
-  const { from, to } = periodRange(period);
+  // Un mes puntual (?m=2026-10) pisa al período rápido: del 1 al último día de ese mes (o hasta hoy si es el actual).
+  const monthParam = param(sp, "m");
+  const month = /^\d{4}-(0[1-9]|1[0-2])$/.test(monthParam ?? "") ? (monthParam as string) : "";
+  const range = periodRange(period);
+  const monthEnd = month ? new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0)).toISOString().slice(0, 10) : "";
+  const { from, to } = month ? { from: `${month}-01`, to: monthEnd < today() ? monthEnd : today() } : range;
   // Lo de Mercado Libre se consulta al mismo tiempo que la base (antes esperaba a que terminara cada cosa).
   const mlP = isSupabase()
     ? activeProjectId().then((id) => Promise.all([mlData(id, { messages: false }).catch(() => null), mlAlerts(id).catch(() => [])]))
@@ -22,6 +28,13 @@ export default async function DashboardPage({ searchParams }: PageProps<"/">) {
   // Por defecto solo cuenta lo de la sociedad (desde la fecha de inicio de la sociedad); "Incluir lo anterior" muestra también el historial previo.
   const withHistory = param(sp, "h") === "1";
   const db = withHistory ? all : sociedadDb(all);
+  // Meses que se pueden elegir: desde el primero con ventas (o gastos) hasta el actual.
+  const firstMonth = ([...db.sales.map((x) => x.date), ...db.expenses.map((x) => x.date)].sort()[0] ?? today()).slice(0, 7);
+  const monthHrefs: Record<string, string> = {};
+  for (let [y, mo] = firstMonth.split("-").map(Number); `${y}-${String(mo).padStart(2, "0")}` <= today().slice(0, 7); mo === 12 ? ((y += 1), (mo = 1)) : (mo += 1)) {
+    const key = `${y}-${String(mo).padStart(2, "0")}`;
+    monthHrefs[key] = `?m=${key}${withHistory ? "&h=1" : ""}`;
+  }
   const k = kpis(db, from, to);
   const cov = costCoverage(db, from, to);
   const series = dailySeries(db, from, to);
@@ -49,22 +62,23 @@ export default async function DashboardPage({ searchParams }: PageProps<"/">) {
     <div className="space-y-6">
       <PageHeader title="Dashboard" subtitle={`${fdate(from)} al ${fdate(to)}`} />
 
-      <nav className="flex flex-wrap gap-1.5" aria-label="Período">
+      <nav className="flex flex-wrap items-center gap-1.5" aria-label="Período">
         {PERIODS.map((p) => (
-          <Link key={p.value} href={`?p=${p.value}${withHistory ? "&h=1" : ""}`} className={`rounded-full border px-3 py-1 text-sm ${p.value === period ? "border-primary bg-primary text-white" : "border-line bg-surface text-muted hover:text-ink"}`}>
+          <Link key={p.value} href={`?p=${p.value}${withHistory ? "&h=1" : ""}`} className={`rounded-full border px-3 py-1 text-sm ${!month && p.value === period ? "border-primary bg-primary text-white" : "border-line bg-surface text-muted hover:text-ink"}`}>
             {p.label}
           </Link>
         ))}
+        <MonthPicker selected={month || today().slice(0, 7)} hrefs={monthHrefs} />
       </nav>
 
       {from < SOCIEDAD_DESDE && (
         withHistory ? (
           <Guide title="Incluye el historial anterior a la sociedad">
-            Estás viendo también lo vendido antes del {fdate(SOCIEDAD_DESDE)}. <Link href={`?p=${period}`} className="font-medium text-primary underline">Volver a solo la sociedad</Link>
+            Estás viendo también lo vendido antes del {fdate(SOCIEDAD_DESDE)}. <Link href={`?${month ? `m=${month}` : `p=${period}`}`} className="font-medium text-primary underline">Volver a solo la sociedad</Link>
           </Guide>
         ) : (
           <Guide tone="warning" title="Este período es anterior a la sociedad">
-            Los números en $ 0 son porque desde el {fdate(SOCIEDAD_DESDE)} se cuenta lo de la sociedad y antes no entra. <Link href={`?p=${period}&h=1`} className="font-medium text-primary underline">Ver también lo anterior</Link>
+            Los números en $ 0 son porque desde el {fdate(SOCIEDAD_DESDE)} se cuenta lo de la sociedad y antes no entra. <Link href={`?${month ? `m=${month}` : `p=${period}`}&h=1`} className="font-medium text-primary underline">Ver también lo anterior</Link>
           </Guide>
         )
       )}
