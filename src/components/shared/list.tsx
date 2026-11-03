@@ -12,7 +12,7 @@ export function PageHeader({ title, subtitle, actions, logo, banner }: { title: 
         {logo ? (
           <h1 className="flex min-h-8 items-center max-md:justify-center"><img src={logo.src} alt={title} style={{ height: logo.height }} className="block w-auto" /></h1>
         ) : (
-          <h1 className="text-2xl font-semibold">{title}</h1>
+          <h1 className="text-[1.75rem] font-semibold leading-tight tracking-tight">{title}</h1>
         )}
         {subtitle && <p className="mt-0.5 text-sm text-muted" style={banner ? { color: banner.sub } : undefined}>{subtitle}</p>}
       </div>

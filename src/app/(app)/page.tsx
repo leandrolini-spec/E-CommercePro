@@ -64,7 +64,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/">) {
 
       <nav className="flex flex-wrap items-center gap-1.5" aria-label="Período">
         {PERIODS.map((p) => (
-          <Link key={p.value} href={`?p=${p.value}${withHistory ? "&h=1" : ""}`} className={`rounded-full border px-3 py-1 text-sm ${!month && p.value === period ? "border-primary bg-primary text-white" : "border-line bg-surface text-muted hover:text-ink"}`}>
+          <Link key={p.value} href={`?p=${p.value}${withHistory ? "&h=1" : ""}`} className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${!month && p.value === period ? "border-primary bg-primary text-white shadow-soft" : "border-line bg-surface text-muted hover:bg-mint hover:text-ink"}`}>
             {p.label}
           </Link>
         ))}
@@ -107,8 +107,8 @@ export default async function DashboardPage({ searchParams }: PageProps<"/">) {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-3">
-        <Panel title="Más vendidos"><Rank color="bg-success" rows={top.map((p) => ({ name: p.name, text: `${p.units} u.`, ratio: p.units / (top[0]?.units || 1) }))} /></Panel>
-        <Panel title="Mayor margen"><Rank color="bg-success" rows={bestMargin.map((p) => ({ name: p.name, text: pct(p.marginPct), ratio: Math.max(0, p.marginPct) / 100 }))} /></Panel>
+        <Panel title="Más vendidos"><Rank color="bg-accent" rows={top.map((p) => ({ name: p.name, text: `${p.units} u.`, ratio: p.units / (top[0]?.units || 1) }))} /></Panel>
+        <Panel title="Mayor margen"><Rank color="bg-accent" rows={bestMargin.map((p) => ({ name: p.name, text: pct(p.marginPct), ratio: Math.max(0, p.marginPct) / 100 }))} /></Panel>
         <Panel title="Menor margen"><Rank color="bg-warning" rows={worstMargin.map((p) => ({ name: p.name, text: pct(p.marginPct), ratio: Math.max(0, p.marginPct) / 100 }))} /></Panel>
       </section>
 
@@ -120,7 +120,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/">) {
           <Panel title="Productos más vendidos (unidades)">{productPie.length ? <Chart type="pie" data={productPie} /> : <EmptyState title="Sin ventas" />}</Panel>
           <Panel title="Ventas por provincia">{place.provinces.length ? <Chart type="pie" format="sales" data={topWithOthers(place.provinces, 6)} /> : <EmptyState title="Sin datos" />}</Panel>
           <Panel title="Localidades que más compran (cantidad de ventas)">
-            <Rank color="bg-success" rows={place.localities.slice(0, 10).map((l) => ({ name: l.label, text: `${l.value} ventas`, ratio: l.value / (place.localities[0]?.value || 1) }))} />
+            <Rank color="bg-accent" rows={place.localities.slice(0, 10).map((l) => ({ name: l.label, text: `${l.value} ventas`, ratio: l.value / (place.localities[0]?.value || 1) }))} />
           </Panel>
         </div>
       </section>
@@ -162,8 +162,8 @@ export default async function DashboardPage({ searchParams }: PageProps<"/">) {
 
 function Panel({ title, children, className = "" }: { title: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className={`rounded-lg border border-line bg-surface p-4 ${className}`}>
-      <h3 className="mb-3 text-sm font-semibold">{title}</h3>
+    <div className={`lift rounded-2xl border border-line bg-surface p-5 shadow-card ${className}`}>
+      <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-accent" />{title}</h3>
       {children}
     </div>
   );
@@ -181,8 +181,8 @@ function Rank({ rows, color }: { rows: { name: string; text: string; ratio: numb
               <span className="truncate font-medium" title={r.name}>{r.name}</span>
               <span className="shrink-0 font-semibold tabular-nums">{r.text}</span>
             </div>
-            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-bg">
-              <div className={`h-full rounded-full ${color}`} style={{ width: `${Math.min(100, Math.max(4, r.ratio * 100))}%` }} />
+            <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-line/60">
+              <div className={`bar-grow h-full rounded-full ${color}`} style={{ width: `${Math.min(100, Math.max(4, r.ratio * 100))}%` }} />
             </div>
           </div>
         </li>

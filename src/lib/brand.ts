@@ -1,7 +1,7 @@
 import type { BrandInfo } from "@/modules/types";
 
 /** Color principal y secundario (claro) de la marca. El secundario reemplaza al blanco en títulos del menú y da fondo y bordes suaves a los informes. */
-export const DEFAULT_COLOR = "#16a34a";
+export const DEFAULT_COLOR = "#19c37d";
 export const DEFAULT_SOFT = "#FCFAF2";
 
 const HEX = /^#[0-9a-fA-F]{6}$/;

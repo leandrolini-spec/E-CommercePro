@@ -1,20 +1,18 @@
 import { ImageResponse } from "next/og";
-import { brandColor } from "@/lib/brand";
-import { getDb } from "@/modules/data";
 
-export const dynamic = "force-dynamic";
-export const size = { width: 64, height: 64 };
 export const contentType = "image/png";
+export const size = { width: 64, height: 64 };
 
-/** Ícono de la pestaña: la inicial de la empresa sobre su color de marca (así no aparece el ícono por defecto del proyecto). */
-export default async function Icon() {
-  const db = await getDb().catch(() => null);
-  const letter = (db?.settings.name ?? "T").trim().charAt(0).toUpperCase() || "T";
+/** Ícono de la pestaña: el isotipo de Carritix (carrito con ruedas verdes sobre fondo tinta). */
+export default function Icon() {
   return new ImageResponse(
     (
-      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: brandColor(db?.settings.brand), color: "#fff", fontSize: 42, fontWeight: 800, borderRadius: 14 }}>
-        {letter}
-      </div>
+      <svg width="64" height="64" viewBox="0 0 64 64">
+        <rect width="64" height="64" rx="15" fill="#0F1115" />
+        <path d="M13 19h7l5 22h22l5-17H22" fill="none" stroke="#fff" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="28" cy="49" r="3.6" fill="#19C37D" />
+        <circle cx="44" cy="49" r="3.6" fill="#19C37D" />
+      </svg>
     ),
     size,
   );

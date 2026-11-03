@@ -80,15 +80,15 @@ export default async function GastosPage({ searchParams }: PageProps<"/gastos">)
         {EXPENSE_KINDS.map((k) => {
           const total = base.filter((e) => (e.kind ?? defaultExpenseKind(e.category)) === k.value).reduce((a, e) => a + e.amount, 0);
           return (
-            <div key={k.value} className="rounded-lg border border-line bg-surface p-4" style={{ borderLeft: `4px solid ${k.color}` }}>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted">{k.short}</p>
+            <div key={k.value} className="lift rounded-2xl border border-line bg-surface p-4 shadow-card">
+              <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted"><span className="h-2 w-2 rounded-full" style={{ background: k.color }} aria-hidden />{k.short}</p>
               <p className="mt-2 text-2xl font-semibold text-ink">{money(total)}</p>
               <p className="mt-1 text-xs text-muted">{k.value === "venta" ? "Va a la solapa Compras" : k.value === "insumo" ? "Va a Insumos de la empresa" : "Servicios, dominio, contador…"}</p>
             </div>
           );
         })}
-        <div className="rounded-lg border border-line bg-bg p-4" style={{ borderLeft: "4px solid #0f172a" }}>
-          <p className="text-xs font-medium uppercase tracking-wide text-muted">Total gastado</p>
+        <div className="lift rounded-2xl border border-line bg-bg p-4 shadow-card">
+          <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted"><span className="h-2 w-2 rounded-full bg-ink" aria-hidden />Total gastado</p>
           <p className="mt-2 text-2xl font-semibold text-ink">{money(filtered.reduce((a, e) => a + e.amount, 0))}</p>
           <p className="mt-1 text-xs text-muted">{range.label}</p>
         </div>

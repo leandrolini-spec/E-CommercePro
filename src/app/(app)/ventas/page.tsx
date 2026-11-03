@@ -74,7 +74,7 @@ function HistorialTab({ sp, db }: { sp: SearchParams; db: Db }) {
   );
 }
 
-const TABS = [["compradores", "Nuevos compradores"], ["historial", "Historial de ventas"], ["reclamos", "Reclamos"], ["reembolsar", "Reembolsar"]] as const;
+const TABS = [["compradores", "Nuevos"], ["historial", "Historial de ventas"], ["reclamos", "Reclamos"], ["reembolsar", "Reembolsar"]] as const;
 
 const amountOf = (db: Db, s: Sale) => saleTotals({ ...db, sales: [{ ...s, status: "pendiente" }] }, { ...s, status: "pendiente" }).revenue;
 const prodsOf = (db: Db, s: Sale) => s.items.map((i) => `${i.qty} × ${db.products.find((p) => p.id === i.productId)?.name ?? "Producto"}`).join(" · ");

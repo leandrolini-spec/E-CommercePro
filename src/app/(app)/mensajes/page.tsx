@@ -237,7 +237,7 @@ export default async function MensajesPage({ searchParams }: { searchParams: Pro
           {GROUPS.map((g) => (
             <div key={g.channel} className="mt-3">
               <p className="mb-1 flex items-center gap-2 px-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted">
-                <span className="h-3 w-1 rounded-full" style={{ background: CH[g.channel].color }} />{CH[g.channel].label}
+                <span className="h-2 w-2 rounded-full" style={{ background: CH[g.channel].color }} />{CH[g.channel].label}
               </p>
               {g.folders.map((f) => folderLink(f.key, f.label))}
             </div>
@@ -250,7 +250,7 @@ export default async function MensajesPage({ searchParams }: { searchParams: Pro
           {GROUPS.map((g) => (
             <div key={g.channel} className="mt-3">
               <p className="mb-1 flex items-center gap-2 px-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted">
-                <span className="h-3 w-1 rounded-full" style={{ background: CH[g.channel].color }} />{CH[g.channel].label}
+                <span className="h-2 w-2 rounded-full" style={{ background: CH[g.channel].color }} />{CH[g.channel].label}
               </p>
               {g.folders.map((f) => folderLink(f.key, f.label))}
             </div>
@@ -279,9 +279,9 @@ export default async function MensajesPage({ searchParams }: { searchParams: Pro
             <ul className="max-h-[68vh] divide-y divide-line overflow-y-auto">
               {shown.slice(0, 150).map((t) => (
                 <li key={t.id}>
-                  <Link href={qs({ hilo: t.id })} className={`block border-l-[3px] px-3 py-2.5 hover:bg-bg ${t.id === selId ? "bg-bg" : ""}`} style={{ borderLeftColor: CH[t.channel].color }}>
+                  <Link href={qs({ hilo: t.id })} className={`block rounded-2xl px-3 py-2.5 transition-colors hover:bg-mint/60 ${t.id === selId ? "bg-mint" : ""}`}>
                     <div className="flex items-center justify-between gap-2">
-                      <TypeTag t={t} />
+                      <span className="flex items-center gap-1.5"><span aria-hidden className="h-2 w-2 shrink-0 rounded-full" style={{ background: CH[t.channel].color }} /><TypeTag t={t} /></span>
                       <span className="shrink-0 text-[11px] text-muted" title={ago(t.at)}>{when(t.at)}</span>
                     </div>
                     <p className={`mt-1 flex items-center gap-1.5 text-sm ${t.unread && t.open ? "font-semibold" : "font-medium"}`}>

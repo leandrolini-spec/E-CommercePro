@@ -44,7 +44,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
       <Sidebar modules={enabledModules().filter((m) => !integrationsOff.includes(m.slug))} name={db.settings.name} logoUrl={db.settings.brand?.logoUrl || undefined} logoOnDark={db.settings.brand?.logoOnDark} soft={brandSoft(db.settings.brand)} />
       <main className="min-w-0 flex-1 p-4 md:p-8">
         {db.isDemo && (
-          <div className="mb-4 flex items-center gap-2 rounded-md bg-warning/10 px-3 py-2 text-xs text-warning">
+          <div className="mb-4 flex items-center gap-2 rounded-full border border-warning/20 bg-warning/10 px-4 py-2 text-xs text-warning">
             <span className="rounded bg-warning px-1.5 py-0.5 font-semibold text-white">DEMO</span>
             Estás viendo datos de demostración. Podés volver a tus datos desde Configuración.
           </div>

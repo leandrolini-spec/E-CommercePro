@@ -194,7 +194,7 @@ export default async function ReportesPage({ searchParams }: PageProps<"/reporte
               ...(report === "fueraml" ? [] : [{ name: "Todos", orders: channelCards.reduce((a, x) => a + x.orders, 0), revenue: channelCards.reduce((a, x) => a + x.revenue, 0) }])].map((c) => {
               const total = channelCards.reduce((a, x) => a + x.revenue, 0) || 1;
               return (
-                <div key={c.name} className={`rounded-lg border border-line p-4 ${c.name === "Todos" ? "bg-bg" : "bg-surface"}`} style={{ borderLeft: `4px solid ${channelColor(c.name)}` }}>
+                <div key={c.name} className={`lift rounded-2xl border border-line p-4 shadow-card ${c.name === "Todos" ? "bg-bg" : "bg-surface"}`}>
                   <p className="flex items-center gap-2 text-sm font-semibold"><span className="h-2.5 w-2.5 rounded-full" style={{ background: channelColor(c.name) }} aria-hidden />{c.name}</p>
                   <p className="mt-1 text-xl font-semibold tabular-nums">{money(c.revenue)}</p>
                   <p className="text-xs text-muted">{int(c.orders)} venta{c.orders === 1 ? "" : "s"} · {((c.revenue / total) * 100).toFixed(0)} % del total</p>
@@ -209,7 +209,7 @@ export default async function ReportesPage({ searchParams }: PageProps<"/reporte
       {b ? <BalanceView b={b} /> : (
         <DataTable
           rows={body} rowKey={(r) => r.cells.join("|")} emptyTitle="Sin datos en el período" rowClass={(r) => (r.total ? "bg-success/10 text-success font-semibold" : undefined)}
-          rowStyle={(r) => (r.color && !r.total ? { background: `${r.color}1f`, boxShadow: `inset 4px 0 0 ${r.color}` } : undefined)}
+          rowStyle={(r) => (r.color && !r.total ? { background: `${r.color}1f` } : undefined)}
           columns={head.map((h, i) => ({ key: String(i), header: h, align: i === 0 || h === "Canal" ? ("left" as const) : ("right" as const), render: (r: Row) => (h === "Canal" && r.cells[i] ? <span className="inline-flex items-center gap-2 font-medium"><span className="h-2.5 w-2.5 rounded-full" style={{ background: channelColor(r.cells[i]) }} aria-hidden />{r.cells[i]}</span> : r.cells[i]) }))}
         />
       )}

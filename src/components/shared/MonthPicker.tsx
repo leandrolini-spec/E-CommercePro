@@ -16,13 +16,13 @@ export function MonthPicker({ selected, hrefs }: { selected: string; hrefs: Reco
   return (
     <div className="relative inline-block" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOpen(false); }}>
       <button type="button" onClick={() => { setOpen((o) => !o); setYear(Number(selected.slice(0, 4))); }} aria-expanded={open}
-        className="inline-flex h-10 items-center gap-2.5 rounded-lg border border-line bg-surface px-4 text-sm font-semibold text-ink hover:bg-bg">
+        className="inline-flex h-10 items-center gap-2.5 rounded-full border border-line bg-surface px-4 text-sm font-semibold text-ink shadow-soft transition hover:bg-mint">
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-muted" aria-hidden><rect x="3" y="4.5" width="14" height="12.5" rx="2" /><path d="M3 8.5h14M7 3v3M13 3v3" /></svg>
         {label}
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={`h-4 w-4 text-muted transition ${open ? "rotate-180" : ""}`} aria-hidden><path d="m5 8 5 5 5-5" /></svg>
       </button>
       {open && (
-        <div className="absolute left-0 z-30 mt-2 w-72 rounded-xl border border-line bg-surface p-3 shadow-xl">
+        <div className="absolute left-0 z-30 mt-2 w-72 rounded-2xl border border-line bg-surface p-3 shadow-card">
           <div className="mb-2 flex items-center justify-between">
             <button type="button" disabled={year <= minY} onClick={() => setYear((y) => y - 1)} aria-label="Año anterior" className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-line text-ink hover:bg-bg disabled:opacity-30">‹</button>
             <span className="text-sm font-semibold">{year}</span>

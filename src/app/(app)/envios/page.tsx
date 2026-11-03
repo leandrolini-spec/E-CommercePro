@@ -184,8 +184,8 @@ export default async function EnviosPage({ searchParams }: { searchParams: Promi
       {view === "tablero" && !todas && curCol && (
         <div className="flex items-stretch gap-2 md:hidden" aria-label="Etapas">
           {prevCol ? <Link href={href({ etapa: prevCol.id })} aria-label={`Etapa anterior: ${prevCol.name}`} className="flex w-24 shrink-0 flex-col items-center justify-center rounded-lg border border-line bg-surface px-1 py-2 text-xs font-medium text-muted hover:text-ink"><span className="text-lg leading-none">←</span><span className="mt-0.5 w-full truncate text-center">{prevCol.name}</span></Link> : <span className="w-24 shrink-0" />}
-          <div className="flex min-w-0 flex-1 flex-col items-center justify-center rounded-lg border-t-4 bg-surface px-2 py-2 text-center shadow-sm" style={{ borderColor: curCol.color }}>
-            <p className="text-[11px] uppercase tracking-wide text-muted">Etapa {curIdx + 1} de {columns.length}</p>
+          <div className="flex min-w-0 flex-1 flex-col items-center justify-center rounded-2xl border border-line bg-surface px-2 py-2 text-center shadow-sm">
+            <p className="flex items-center justify-center gap-1.5 text-[11px] uppercase tracking-wide text-muted"><span className="h-2 w-2 rounded-full" style={{ background: curCol.color }} aria-hidden />Etapa {curIdx + 1} de {columns.length}</p>
             <p className="font-semibold">{curCol.name} <span className="text-muted">({curCount})</span></p>
           </div>
           {nextCol ? <Link href={href({ etapa: nextCol.id })} aria-label={`Etapa siguiente: ${nextCol.name}`} className="flex w-24 shrink-0 flex-col items-center justify-center rounded-lg border border-line bg-surface px-1 py-2 text-xs font-medium text-muted hover:text-ink"><span className="text-lg leading-none">→</span><span className="mt-0.5 w-full truncate text-center">{nextCol.name}</span></Link> : <span className="w-24 shrink-0" />}
@@ -203,7 +203,7 @@ export default async function EnviosPage({ searchParams }: { searchParams: Promi
             const cards = filtered.filter((x) => stageOf(x) === col.id);
             return (
               <section key={col.id} className={`w-full rounded-lg bg-bg p-2 md:block md:w-80 md:shrink-0 ${todas ? (cards.length === 0 ? "hidden" : "") : col.id !== current ? "hidden" : ""}`}>
-                <h2 className="mb-2 flex items-center justify-between border-t-4 px-1 pt-2 text-sm font-semibold" style={{ borderColor: col.color }}>
+                <h2 className="mb-2 flex items-center justify-between px-2 pt-1 text-sm font-semibold">
                   <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full" style={{ background: col.color }} aria-hidden />{col.name}</span>
                   <span className="flex items-center gap-1.5">
                     {cards.length > 0 && <Link href={`/etiquetas?stage=${col.id}`} title={`Imprimir las etiquetas de ${col.name}`} aria-label={`Imprimir las etiquetas de ${col.name}`} className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-line bg-surface text-muted hover:text-ink"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden><path d="M6 7V3h8v4M6 14H4.5A1.5 1.5 0 0 1 3 12.5v-4A1.5 1.5 0 0 1 4.5 7h11A1.5 1.5 0 0 1 17 8.5v4a1.5 1.5 0 0 1-1.5 1.5H14M6 11h8v6H6z" /></svg></Link>}

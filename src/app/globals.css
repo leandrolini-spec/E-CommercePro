@@ -1,31 +1,75 @@
 @import "tailwindcss";
 
-/* Paleta del brief (sección 4). Uso funcional: azul = acción, verde = positivo,
-   ámbar = advertencia, rojo = crítico, gris = secundario. */
+/* Marca Carritix: tinta y verde, mucho aire, bordes suaves. Verde = acento y acción, tinta = texto y menú. */
 @theme {
-  --color-primary: #0a0a0a;
-  --color-primary-hover: #2b2b2b;
+  --color-primary: #0f1115;
+  --color-primary-hover: #262b33;
   --color-navy: #1e293b;
-  --color-bg: #f8fafc;
+  --color-bg: #eef1ec;
   --color-surface: #ffffff;
-  --color-ink: #0f172a;
-  --color-muted: #64748b;
-  --color-line: #e2e8f0;
-  --color-success: #16a34a;
+  --color-ink: #0f1115;
+  --color-muted: #5c6470;
+  --color-line: #e1e6de;
+  --color-success: #0b7a4b;
   --color-warning: #d97706;
-  --color-danger: #dc2626;
+  --color-danger: #d92d20;
   --color-info: #0284c7;
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --color-accent: #19c37d;
+  --color-mint: #e6f8ef;
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-sora), var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.5rem;
+  --shadow-card: 0 1px 2px rgb(15 17 21 / 0.04), 0 12px 30px -16px rgb(15 17 21 / 0.12);
+  --shadow-soft: 0 1px 2px rgb(15 17 21 / 0.05), 0 6px 16px -8px rgb(15 17 21 / 0.14);
+  --shadow-green: 0 8px 20px -10px rgb(25 195 125 / 0.85);
 }
 
 body {
-  background: var(--color-bg);
+  background:
+    radial-gradient(1100px 520px at 92% -10%, rgb(25 195 125 / 0.10), transparent 62%),
+    radial-gradient(800px 460px at -8% 108%, rgb(25 195 125 / 0.07), transparent 60%),
+    var(--color-bg);
+  background-attachment: fixed;
   color: var(--color-ink);
   font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
 }
+h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.015em; }
+::selection { background: rgb(25 195 125 / 0.28); }
 
 dialog::backdrop {
-  background: rgb(15 23 42 / 0.4);
+  background: rgb(15 17 21 / 0.45);
+  backdrop-filter: blur(3px);
+}
+
+/* Formas suaves: todo lo que se toca es píldora y lo que contiene es redondeado. Nada rectangular al lado de una píldora. */
+button { border-radius: 1.5rem; }
+input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]):not([type="file"]), select { border-radius: 1.5rem; }
+textarea { border-radius: 1.25rem; }
+a:is(.rounded, .rounded-md, .rounded-lg, .rounded-xl), summary:is(.rounded, .rounded-md, .rounded-lg, .rounded-xl), label:is(.rounded, .rounded-md, .rounded-lg) { border-radius: 1.5rem; }
+:is(div, p, ul, ol, li, details, table, img, aside, header, section):is(.rounded, .rounded-md) { border-radius: 1rem; }
+span:is(.rounded, .rounded-md) { border-radius: 9999px; }
+input[type="checkbox"] { border-radius: 0.375rem; accent-color: #19c37d; }
+input[type="radio"] { accent-color: #19c37d; }
+
+/* Movimiento: las tarjetas entran con suavidad, las barras crecen y las de uso frecuente se levantan al pasar el mouse. */
+@keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes showAfter { to { opacity: 1; } }
+.kpi { animation: rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; animation-delay: calc(var(--i, 0) * 55ms); }
+.kpi:nth-child(2) { --i: 1; } .kpi:nth-child(3) { --i: 2; } .kpi:nth-child(4) { --i: 3; } .kpi:nth-child(5) { --i: 4; } .kpi:nth-child(6) { --i: 5; }
+.kpi:nth-child(7) { --i: 6; } .kpi:nth-child(8) { --i: 7; } .kpi:nth-child(9) { --i: 8; } .kpi:nth-child(10) { --i: 9; } .kpi:nth-child(11) { --i: 10; } .kpi:nth-child(12) { --i: 11; }
+.bar-grow { transform-origin: left center; animation: grow 0.95s cubic-bezier(0.2, 0.7, 0.2, 1) 0.2s backwards; }
+.count { animation: showAfter 0s 1.5s forwards; }
+.lift { transition: transform 0.28s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.28s ease, border-color 0.28s ease; }
+.lift:hover { transform: translateY(-3px); box-shadow: 0 2px 4px rgb(15 17 21 / 0.05), 0 22px 40px -18px rgb(25 195 125 / 0.45); border-color: color-mix(in srgb, #19c37d 55%, var(--color-line)); }
+@media (prefers-reduced-motion: reduce) {
+  .kpi, .bar-grow { animation: none; }
+  .lift, .lift:hover { transition: none; transform: none; }
+  .count { opacity: 1 !important; animation: none; }
 }
 
 /* Celular: solapas, filtros por período y títulos de sección centrados y parejos en todas las pantallas. */
@@ -65,15 +109,18 @@ main .grid > * { min-width: 0; }
   main .truncate { overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; }
 }
 
-/* Tarjetas y solapas con borde de color (verde en todo el CRM; el de la marca en Mercado Libre y Tienda Nube, que definen --crm-accent). */
-:root { --crm-accent: #16a34a; }
+/* Tarjetas y solapas con borde suave (verde en todo el CRM; el de la marca en Mercado Libre y Tienda Nube, que definen --crm-accent). */
+:root { --crm-accent: #19c37d; }
 main .rounded-lg.border:not(.border-dashed):not(.border-transparent),
+main .rounded-xl.border:not(.border-dashed):not(.border-transparent),
+main .rounded-2xl.border:not(.border-dashed):not(.border-transparent),
 main details.rounded-lg {
-  border-color: color-mix(in srgb, var(--crm-accent) 42%, var(--color-line)); border-width: 1px;
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--crm-accent) 10%, transparent);
+  border-color: color-mix(in srgb, var(--crm-accent) 22%, var(--color-line)); border-width: 1px;
+  box-shadow: var(--shadow-card);
 }
 main nav[aria-label] a, main nav[aria-label] button {
-  border-color: color-mix(in srgb, var(--crm-accent) 50%, var(--color-line)); border-width: 1px; border-style: solid;
+  border-color: color-mix(in srgb, var(--crm-accent) 30%, var(--color-line)); border-width: 1px; border-style: solid;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 @media (max-width: 767px) {
   html, body { overflow-x: clip; max-width: 100%; }

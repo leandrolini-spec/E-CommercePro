@@ -1,3 +1,4 @@
+import { AnimatedValue } from "./AnimatedValue";
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from "react";
 
 const cx = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(" ");
@@ -8,16 +9,16 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 export function Button({ variant = "primary", className, ...props }: ButtonProps) {
   const styles = {
-    primary: "bg-primary text-white hover:bg-primary-hover",
-    secondary: "bg-surface text-ink border border-line hover:bg-bg",
-    danger: "bg-danger text-white hover:opacity-90",
-    ghost: "text-muted hover:bg-line/50",
+    primary: "bg-accent text-ink shadow-green hover:-translate-y-px hover:bg-[#3fd496] active:translate-y-0",
+    secondary: "border border-line bg-surface text-ink shadow-soft hover:-translate-y-px hover:border-accent/50 hover:bg-mint",
+    danger: "bg-danger text-white shadow-soft hover:-translate-y-px hover:opacity-90",
+    ghost: "text-muted hover:bg-mint hover:text-ink",
   }[variant];
   return (
     <button
       {...props}
       className={cx(
-        "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md px-3.5 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+        "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 py-2 text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:hover:translate-y-0",
         styles,
         className,
       )}
@@ -29,7 +30,7 @@ export function Button({ variant = "primary", className, ...props }: ButtonProps
 export function Field({ label, error, children, center = false }: { label: string; error?: string; children: ReactNode; center?: boolean }) {
   return (
     <label className="block text-sm">
-      <span className={`mb-1 block font-medium text-ink ${center ? "text-center" : ""}`}>{label}</span>
+      <span className={`mb-1.5 block pl-1 font-medium text-ink ${center ? "text-center" : ""}`}>{label}</span>
       {children}
       {error && <span className="mt-1 block text-xs text-danger">{error}</span>}
     </label>
@@ -37,7 +38,7 @@ export function Field({ label, error, children, center = false }: { label: strin
 }
 
 const inputCls =
-  "w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
+  "w-full rounded-full border border-line bg-surface px-4 py-2.5 text-sm text-ink placeholder:text-muted/70 transition focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent/15";
 
 export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return <input {...props} className={cx(inputCls, className)} />;
@@ -91,7 +92,7 @@ export function Badge({ tone = "neutral", children, fixed = false }: { tone?: To
 
 export function Alert({ tone = "info", title, children }: { tone?: Tone; title: string; children?: ReactNode }) {
   return (
-    <div role="alert" className={cx("rounded-md border-l-4 px-4 py-3 text-sm", toneCls[tone], "border-current")}>
+    <div role="alert" className={cx("rounded-2xl px-5 py-3.5 text-sm ring-1 ring-current/15", toneCls[tone])}>
       <p className="font-semibold">{title}</p>
       {children && <div className="mt-0.5 text-ink/80">{children}</div>}
     </div>
@@ -102,11 +103,15 @@ export function Alert({ tone = "info", title, children }: { tone?: Tone; title: 
 /** Tarjeta de dato. `detail` es un renglón chico justo debajo del título (por ejemplo la medida de un producto); `hint` va más abajo. */
 export function KpiCard({ label, value, hint, detail, large, aligned }: { label: string; value: string; hint?: string; detail?: string; large?: boolean; aligned?: boolean }) {
   return (
-    <div className="rounded-lg border border-line bg-surface p-4 max-md:text-center">
-      <p className="text-xs font-medium uppercase tracking-wide text-muted">{label}</p>
-      <p className={`mt-2 font-semibold text-ink max-md:whitespace-normal max-md:break-words md:truncate ${large ? "text-3xl md:text-4xl" : "text-xl md:text-2xl"} ${aligned ? "md:h-11 md:leading-[2.75rem]" : ""}`} title={value}>{value}</p>
-      {(detail || aligned) && <p className={`text-sm text-muted max-md:break-words md:truncate ${aligned ? "md:h-5" : ""}`} title={detail}>{detail}</p>}
-      {hint && <p className="mt-1 whitespace-pre-line text-xs text-muted max-md:break-words">{hint}</p>}
+    <div className="kpi lift group relative overflow-hidden rounded-2xl border border-line bg-surface p-5 shadow-card max-md:text-center">
+      <span aria-hidden className="pointer-events-none absolute -right-7 -top-7 h-24 w-24 rounded-full bg-accent/10 transition-transform duration-500 group-hover:scale-[1.6]" />
+      <p className="relative flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted max-md:justify-center">
+        <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent transition-transform duration-300 group-hover:scale-150" />
+        {label}
+      </p>
+      <p className={`relative mt-3 font-display font-semibold tracking-tight text-ink max-md:whitespace-normal max-md:break-words md:truncate ${large ? "text-3xl md:text-4xl" : "text-xl md:text-[1.65rem]"} ${aligned ? "md:h-11 md:leading-[2.75rem]" : ""}`} title={value}><AnimatedValue value={value} /></p>
+      {(detail || aligned) && <p className={`relative text-sm text-muted max-md:break-words md:truncate ${aligned ? "md:h-5" : ""}`} title={detail}>{detail}</p>}
+      {hint && <p className="relative mt-1.5 whitespace-pre-line text-xs text-muted max-md:break-words">{hint}</p>}
     </div>
   );
 }
@@ -114,7 +119,7 @@ export function KpiCard({ label, value, hint, detail, large, aligned }: { label:
 /* ---------- Estados ---------- */
 export function EmptyState({ title, description, action }: { title: string; description?: string; action?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center rounded-lg border border-dashed border-line bg-surface px-6 py-12 text-center">
+    <div className="flex flex-col items-center rounded-2xl border border-dashed border-accent/30 bg-surface/70 px-6 py-12 text-center">
       <p className="text-base font-semibold text-ink">{title}</p>
       {description && <p className="mt-1 max-w-md text-sm text-muted">{description}</p>}
       {action && <div className="mt-4">{action}</div>}
@@ -125,7 +130,7 @@ export function EmptyState({ title, description, action }: { title: string; desc
 export function LoadingState({ label = "Cargando…" }: { label?: string }) {
   return (
     <div className="flex items-center justify-center gap-3 py-12 text-sm text-muted" role="status">
-      <span className="h-4 w-4 animate-spin rounded-full border-2 border-line border-t-primary" />
+      <span className="h-4 w-4 animate-spin rounded-full border-2 border-line border-t-accent" />
       {label}
     </div>
   );
@@ -133,7 +138,7 @@ export function LoadingState({ label = "Cargando…" }: { label?: string }) {
 
 export function ErrorState({ title = "Algo salió mal", description, action }: { title?: string; description?: string; action?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center rounded-lg border border-danger/30 bg-danger/5 px-6 py-10 text-center">
+    <div className="flex flex-col items-center rounded-2xl border border-danger/25 bg-danger/5 px-6 py-10 text-center">
       <p className="text-base font-semibold text-danger">{title}</p>
       {description && <p className="mt-1 max-w-md text-sm text-ink/80">{description}</p>}
       {action && <div className="mt-4">{action}</div>}

@@ -46,9 +46,9 @@ export function DataTable<T>({
         </div>
       ))}
     </div>
-    <div className="hidden overflow-x-auto rounded-lg border border-line bg-surface md:block">
+    <div className="hidden overflow-x-auto rounded-2xl border border-line bg-surface shadow-card md:block">
       <table className={compact ? "w-full text-xs" : "w-full text-sm"}>
-        <thead className={`border-b border-line bg-bg uppercase tracking-wide text-muted ${compact ? "text-[10px]" : "text-xs"}`}>
+        <thead className={`border-b border-line bg-mint/40 uppercase tracking-wide text-muted ${compact ? "text-[10px]" : "text-xs"}`}>
           <tr>
             {columns.map((c) => (
               <th key={c.key} className={`${compact ? "px-2.5 py-2" : "px-4 py-2.5"} align-middle font-medium leading-tight ${c.align === "right" ? "text-right" : c.align === "center" ? (compact ? "text-center" : "min-w-24 text-center") : "text-left"}`}>
@@ -59,7 +59,7 @@ export function DataTable<T>({
         </thead>
         <tbody className="divide-y divide-line">
           {rows.map((row) => (
-            <tr key={rowKey(row)} className={rowClass?.(row) ?? "hover:bg-bg"} style={rowStyle?.(row)}>
+            <tr key={rowKey(row)} className={rowClass?.(row) ?? "transition-colors hover:bg-mint/50"} style={rowStyle?.(row)}>
               {columns.map((c) => (
                 <td key={c.key} className={`${compact ? "px-2.5 py-2" : "px-4 py-2.5"} ${c.align === "right" ? "text-right" : c.align === "center" ? "text-center" : ""}`}>
                   {c.render(row)}

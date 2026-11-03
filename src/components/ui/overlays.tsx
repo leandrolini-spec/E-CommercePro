@@ -25,7 +25,7 @@ type OverlayProps = { open: boolean; onClose: () => void; title: string; childre
 export function Modal({ open, onClose, title, children, footer }: OverlayProps) {
   const ref = useDialog(open, onClose);
   return (
-    <dialog ref={ref} className="m-auto w-full max-w-lg rounded-lg border border-line bg-surface p-0 shadow-xl">
+    <dialog ref={ref} className="m-auto w-full max-w-lg rounded-lg border border-line bg-surface p-0 shadow-card">
       <div className="relative flex items-center justify-between border-b border-line px-5 py-3 max-md:justify-center max-md:px-12">
         <h2 className="text-base font-semibold max-md:text-center">{title}</h2>
         <button onClick={onClose} aria-label="Cerrar" className="text-muted hover:text-ink max-md:absolute max-md:right-4 max-md:top-1/2 max-md:h-auto! max-md:w-auto! max-md:-translate-y-1/2 max-md:px-0!">✕</button>
@@ -39,7 +39,7 @@ export function Modal({ open, onClose, title, children, footer }: OverlayProps) 
 export function Drawer({ open, onClose, title, children, footer }: OverlayProps) {
   const ref = useDialog(open, onClose);
   return (
-    <dialog ref={ref} className="m-0 ml-auto h-full max-h-none w-full max-w-md rounded-none border-l border-line bg-surface p-0 shadow-xl">
+    <dialog ref={ref} className="m-0 ml-auto h-full max-h-none w-full max-w-md rounded-none border-l border-line bg-surface p-0 shadow-card">
       <div className="flex h-full flex-col">
         <div className="relative flex items-center justify-between border-b border-line px-5 py-3 max-md:justify-center max-md:px-12">
           <h2 className="text-base font-semibold max-md:text-center">{title}</h2>
