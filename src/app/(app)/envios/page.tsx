@@ -173,7 +173,7 @@ export default async function EnviosPage({ searchParams }: { searchParams: Promi
         <KpiCard label="Entregados esta semana" value={int(everything.filter((x) => x.stage === "entregado" && (x.deliveredAt ?? x.dispatchedAt ?? x.createdAt) >= isoDaysAgo(6)).length)} />
         <KpiCard label="Con reclamos" value={int(everything.filter((x) => ["no_entregado", "volvio"].includes(x.stage)).length)} hint="No se entregó o volvió a depósito" />
       </section>
-      <GrowerCard db={db} orders={growerOrders} />
+      {grower && <GrowerCard db={db} orders={growerOrders} />}
       <DriverCard db={db} shipments={everything.filter((x) => isOwn(x.carrier))} />
       <nav className="flex gap-1.5" aria-label="Vista">
         {([["tablero", "Tablero"], ["lista", "Lista"]] as const).map(([k, label]) => (
@@ -207,7 +207,7 @@ export default async function EnviosPage({ searchParams }: { searchParams: Promi
                   <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full" style={{ background: col.color }} aria-hidden />{col.name}</span>
                   <span className="flex items-center gap-1.5">
                     {cards.length > 0 && <Link href={`/etiquetas?stage=${col.id}`} title={`Imprimir las etiquetas de ${col.name}`} aria-label={`Imprimir las etiquetas de ${col.name}`} className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-line bg-surface text-muted hover:text-ink"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden><path d="M6 7V3h8v4M6 14H4.5A1.5 1.5 0 0 1 3 12.5v-4A1.5 1.5 0 0 1 4.5 7h11A1.5 1.5 0 0 1 17 8.5v4a1.5 1.5 0 0 1-1.5 1.5H14M6 11h8v6H6z" /></svg></Link>}
-                    {GROWER_STAGES.includes(col.id) && (() => {
+                    {grower && GROWER_STAGES.includes(col.id) && (() => {
                       const orders = cards.filter((x) => isProductosOrder(x.items)).map(toGrower);
                       if (!orders.length) return null;
                       const wa = grower?.phone ? waLink(grower.phone, growerMessage(orders, grower.name)) : null;
@@ -275,7 +275,7 @@ export default async function EnviosPage({ searchParams }: { searchParams: Promi
                                 return <span title={x.channel === "Tienda Nube" ? "La mensajería de Tienda Nube todavía no está disponible" : "Este envío no tiene mensajería de Mercado Libre"} className="inline-flex h-9 w-full cursor-not-allowed items-center justify-center gap-2 rounded-md border border-line bg-bg px-3 text-sm font-medium text-muted/70">{icon}Mensaje</span>;
                               })()}
                             </div>
-                            <div className="mt-1.5">
+                            {grower && <div className="mt-1.5">
                               {(() => {
                                 const gr = findGrower(db);
                                 const plant = isProductosOrder(x.items);
@@ -284,7 +284,7 @@ export default async function EnviosPage({ searchParams }: { searchParams: Promi
                                   ? <a href={link} target="_blank" rel="noreferrer" title="Se abre WhatsApp con el pedido armado paral productor" className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md border border-[#0f766e]/40 bg-[#0f766e] px-3 text-sm font-medium text-white hover:bg-[#115e59]"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5 shrink-0" aria-hidden><path d="M4 16c0-7 4-11 12-12 0 8-4 12-11 12M4 16c2-3 4-5 7-7" /></svg>Pedido al productor</a>
                                   : <span title={!plant ? "Este pedido no es de productos" : "Falta el WhatsApp del productor: cargalo en Proveedores (proveedor Productor)"} className="inline-flex h-9 w-full cursor-not-allowed items-center justify-center gap-2 rounded-md border border-line bg-bg px-3 text-sm font-medium text-muted/70"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5 shrink-0" aria-hidden><path d="M4 16c0-7 4-11 12-12 0 8-4 12-11 12M4 16c2-3 4-5 7-7" /></svg>Pedido al productor</span>;
                               })()}
-                            </div>
+                            </div>}
                             <div className="mt-2 flex items-stretch gap-1.5 border-t border-line pt-2 flex-wrap">
                               <div className="order-3 flex-1 basis-[calc(33.3%-0.25rem)] [&>*]:w-full [&_button]:w-full">
                               <InfoCardButton title={customerOf(x) || "Envío"} label="Ver el detalle del pedido" large>

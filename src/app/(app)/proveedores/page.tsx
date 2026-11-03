@@ -12,7 +12,7 @@ import { getDb } from "@/modules/data";
 import type { Supplier } from "@/modules/types";
 
 /** Rubros que se sugieren al cargar un proveedor (se pueden escribir otros: se suman solos). */
-const DEFAULT_CATEGORIES = ["Productos", "Semillas", "Macetas y herramientas", "Embalaje", "Librería", "Transporte y logística", "Combustible", "Servicios (contador, dominio…)", "Otros"];
+const DEFAULT_CATEGORIES = ["Productos", "Insumos", "Embalaje", "Librería", "Transporte y logística", "Combustible", "Servicios (contador, dominio…)", "Otros"];
 
 const PencilIcon = <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5" aria-hidden><path d="M13.6 2.9a1.8 1.8 0 0 1 2.5 2.5l-.9.9-2.5-2.5.9-.9ZM11.8 4.7l-7.5 7.5a1 1 0 0 0-.26.45l-.8 3a.5.5 0 0 0 .6.6l3-.8a1 1 0 0 0 .45-.26l7.5-7.5-2.99-2.99Z" /></svg>;
 const PinIcon = <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5" aria-hidden><path fillRule="evenodd" d="M10 18s6-5.2 6-9.5a6 6 0 1 0-12 0C4 12.8 10 18 10 18Zm0-7.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" clipRule="evenodd" /></svg>;

@@ -3,8 +3,8 @@ import type { CompanyInfo } from "./types";
 /** Reglas de entrega: qué días reparte la logística y en qué horario. Se editan en Configuración → Sistema. */
 export type DeliveryRules = { days: number[]; from: string; pickupFrom: string; pickupTo: string; off: string[] };
 
-/** Por defecto: se reparte martes y viernes desde las 13:00, y la logística retira los paquetes de 12:30 a 13:30. */
-export const DEFAULT_DELIVERY: DeliveryRules = { days: [2, 5], from: "13:00", pickupFrom: "12:30", pickupTo: "13:30", off: [] };
+/** Por defecto: se reparte de lunes a viernes durante el día, sin horario de retiro. Cada negocio lo ajusta en Configuración → Sistema. */
+export const DEFAULT_DELIVERY: DeliveryRules = { days: [1, 2, 3, 4, 5], from: "", pickupFrom: "", pickupTo: "", off: [] };
 
 export const WEEKDAYS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
 

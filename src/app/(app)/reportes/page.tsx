@@ -14,7 +14,7 @@ import type { Sale } from "@/modules/types";
 const REPORTS = [
   { key: "ventas", label: "Ventas" }, { key: "rentabilidad", label: "Rentabilidad" }, { key: "mercadolibre", label: "Mercado Libre" },
   { key: "tiendanube", label: "Tienda Nube" }, { key: "fueraml", label: "Otros canales de venta" },
-  { key: "pack", label: "Packs" }, { key: "producto", label: "Otros productos" }, { key: "balance", label: "Balance" },
+  { key: "producto", label: "Productos" }, { key: "balance", label: "Balance" },
 ];
 
 /** Un color por canal, el mismo en todas las pantallas. */

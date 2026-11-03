@@ -17,7 +17,7 @@ export const MODULES: ModuleDef[] = [
   { slug: "proveedores", label: "Proveedores", enabled: true },
   { slug: "presupuestos", label: "Presupuestos", enabled: true },
   { slug: "gastos", label: "Gastos", enabled: true },
-  { slug: "socios", label: "Socios", enabled: true },
+  { slug: "socios", label: "Socios", enabled: false },
   { slug: "reportes", label: "Reportes", enabled: true },
   { slug: "configuracion", label: "Configuración", enabled: true },
   // Ocultos (sus funciones viven en otras secciones): Compras está dentro de Gastos; Pedidos y Caja no se usan.

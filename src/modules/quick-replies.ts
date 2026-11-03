@@ -8,7 +8,7 @@ export type QuickReply = { title: string; text: string };
  */
 export const DEFAULT_QUICK: QuickReply[] = [
   { title: "Bienvenida (coordinar entrega)", text: "¡Gracias por tu compra en {empresa}!\n\nPara coordinar la entrega y avisarte cuando salga tu pedido, respondenos por acá completando:\nTeléfono:\nDirección (calle y número):\nLocalidad:" },
-  { title: "Envíos locales", text: "ENVÍOS LOCALES: repartimos los martes y viernes a partir de las 13:00 Hs. Según el día en que compraste, te llega en alguno de esos días. El horario exacto depende del recorrido." },
+  { title: "Envíos locales", text: "ENVÍOS LOCALES: repartimos de lunes a viernes. Según el día en que compraste, te llega en alguno de esos días. El horario exacto depende del recorrido." },
   { title: "Envíos al interior", text: "ENVÍOS AL INTERIOR: se despachan por transporte y el costo se informa antes de enviar. Si querés, te lo cotizamos.\n\nCualquier duda, escribinos. ¡Saludos!" },
   { title: "Bienvenida (otros productos)", text: "Hola {nombre}! Gracias por tu compra en {empresa}. Tu pedido se despacha por la logística: apenas salga te llega el aviso con el seguimiento. No hace falta que hagas nada. Cualquier duda, escribinos. ¡Saludos!" },
   { title: "Reconfirmar datos", text: "Hola {nombre}! Para dejar todo listo con tu pedido, ¿nos reconfirmás tu domicilio de entrega y un número de teléfono? ¡Muchas gracias!" },
