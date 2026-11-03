@@ -1,0 +1,222 @@
+<title>Propuesta Carritix</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+  /* Propuesta comercial de Carritix en hojas A4 de tamaño fijo: cada bloque entra completo en su hoja y nada se corta. Colores fijos de marca. */
+  :root {
+    --ink: #0F1115; --green: #19C37D; --deep: #0B7A4B; --mint: #E6F8EF; --fog: #EEF1EC; --white: #FFFFFF;
+    --slate: #5C6470; --silver: #A3ABB6; --line: #DDE2DA; --night: #171A20; --nl: #262B33;
+    --display: "Sora", "Helvetica Neue", Arial, sans-serif; --body: "Figtree", "Helvetica Neue", Arial, sans-serif;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  @page { size: A4; margin: 0; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; background: #C9CEC6; font-family: var(--body); font-size: 13.5px; line-height: 1.5; color: var(--ink); }
+  img { display: block; }
+  h1, h2, h3, h4, p { margin: 0; }
+  h1, h2, h3, h4 { font-family: var(--display); font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; }
+  .page { width: 210mm; height: 296.5mm; margin: 24px auto; position: relative; overflow: hidden; break-after: page; page-break-after: always; box-shadow: 0 6px 30px rgba(0,0,0,.18); }
+  @media print { body { background: none; } .page { margin: 0; box-shadow: none; } }
+  .pg { position: absolute; inset: 0; padding: 52px 56px 64px; display: flex; flex-direction: column; gap: 28px; }
+  .ft { position: absolute; left: 56px; right: 56px; bottom: 26px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--slate); }
+  .dark .ft { color: var(--silver); }
+  .fog { background: var(--fog); } .white { background: var(--white); } .dark { background: var(--ink); color: #fff; }
+  .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--deep); }
+  .dark .eyebrow { color: var(--green); }
+  h2 { font-size: 38px; }
+  h3 { font-size: 17px; }
+  .lead { font-size: 16px; color: var(--slate); max-width: 580px; line-height: 1.55; }
+  .dark .lead { color: var(--silver); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .card { background: var(--white); border: 1px solid var(--line); border-radius: 14px; padding: 24px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .white .card { background: var(--fog); border-color: transparent; }
+  .dark .card { background: var(--night); border-color: var(--nl); }
+  .card p { color: var(--slate); font-size: 14px; }
+  .dark .card p { color: var(--silver); }
+  .ico { width: 44px; height: 44px; border-radius: 12px; background: var(--ink); display: flex; align-items: center; justify-content: center; }
+  .dark .ico { background: rgba(25,195,125,.14); }
+  .ico svg { width: 24px; height: 24px; fill: none; stroke: #fff; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .dark .ico svg { stroke: var(--green); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--green); flex: none; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); background: var(--white); }
+  .pair > div { padding: 17px 22px; display: flex; flex-direction: column; gap: 4px; font-size: 13px; line-height: 1.45; }
+  .pair .a { background: #F6F7F4; color: var(--slate); }
+  .pair .a b { color: var(--ink); font-weight: 600; font-size: 13.5px; }
+  .pair .b { color: var(--slate); } .pair .b b { color: var(--deep); font-size: 13.5px; }
+  .pair small { font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; opacity: .8; }
+  table { border-collapse: collapse; width: 100%; background: var(--white); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  th, td { text-align: left; padding: 17px 18px; border-bottom: 1px solid var(--line); font-size: 14px; vertical-align: top; color: var(--ink); }
+  tr:last-child td { border-bottom: 0; }
+  th { font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--slate); background: #F6F7F4; }
+  td:first-child { font-weight: 600; width: 40%; }
+  ul.check { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+  ul.check li { padding-left: 28px; position: relative; font-size: 15px; }
+  ul.check li::before { content: ""; position: absolute; left: 3px; top: 0.4em; width: 11px; height: 6px; border-left: 3px solid var(--green); border-bottom: 3px solid var(--green); transform: rotate(-45deg); }
+  .num { font-family: var(--display); font-weight: 700; font-size: 38px; color: var(--green); line-height: 1; }
+</style>
+
+<!-- Portada -->
+<section class="page dark" id="p1"><div class="pg" style="justify-content:space-between">
+  <img src="../marca/assets/carritix-logo-claro.svg" alt="Carritix" style="height:38px;width:auto;align-self:flex-start">
+  <div style="width:682px;height:420px;border-radius:18px;overflow:hidden;background:#000"><img src="../marca/assets/portada.jpg" alt="Carrito 3D blanco con detalles verdes" style="width:1180px;height:658px;max-width:none;margin-left:-250px;margin-top:-150px"></div>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <span class="eyebrow">Propuesta comercial</span>
+    <h1 style="font-size:56px;letter-spacing:-0.035em;max-width:560px">Escalá tus ventas con orden.</h1>
+    <p class="lead" style="font-size:17px;max-width:520px">Mercado Libre, Tienda Nube y tus ventas directas, en un solo lugar y adaptado a tu negocio.</p>
+  </div>
+  <div style="display:flex;justify-content:space-between;color:var(--silver);font-size:11.5px;border-top:1px solid var(--nl);padding-top:14px"><span>Noviembre 2026</span><span>Vigencia: 15 días desde su entrega</span></div>
+</div></section>
+
+<!-- Página 1: qué resuelve -->
+<section class="page fog" id="p2"><div class="pg" style="gap:24px">
+  <span class="eyebrow">Página 1 · Qué resuelve</span>
+  <h2>Vender más no es trabajar más. Es tener todo en orden.</h2>
+  <p class="lead" style="font-size:15px">Cuando un negocio crece, lo primero que se rompe es el orden: preguntas sin responder, stock que no coincide, envíos anotados en un cuaderno. Carritix convierte cada problema en algo que ves de un vistazo.</p>
+  <div style="display:flex;flex-direction:column;gap:11px">
+    <div class="pair"><div class="a"><small>Hoy</small><b>Preguntas y mensajes desparramados.</b>Una venta se pierde porque nadie contestó a tiempo.</div><div class="b"><small>Con Carritix</small><b>Una bandeja con todo lo pendiente.</b>Respuestas rápidas con tus textos y respuesta automática de lo más común.</div></div>
+    <div class="pair"><div class="a"><small>Hoy</small><b>Cada canal tiene su propio registro.</b>Mercado Libre, Tienda Nube, Instagram, ventas directas: cuatro planillas.</div><div class="b"><small>Con Carritix</small><b>Un solo registro de todos los canales.</b>Ves qué se vendió, por dónde y a quién, sin juntar nada a mano.</div></div>
+    <div class="pair"><div class="a"><small>Hoy</small><b>El stock no coincide con la realidad.</b>Vendés algo que ya no tenés o te quedás sin un producto.</div><div class="b"><small>Con Carritix</small><b>Stock con movimientos y alertas.</b>Sabés qué hay, qué falta y qué conviene pedir al proveedor.</div></div>
+    <div class="pair"><div class="a"><small>Hoy</small><b>Los envíos se siguen de memoria.</b>«¿Ya salió el pedido de María?» y nadie sabe.</div><div class="b"><small>Con Carritix</small><b>Cada pedido, en su etapa.</b>De comprado a entregado, con seguimiento para el comprador y pedido al proveedor por WhatsApp.</div></div>
+    <div class="pair"><div class="a"><small>Hoy</small><b>No sabés cuánto ganás de verdad.</b>Entre comisiones, costos y envíos, el número real se pierde.</div><div class="b"><small>Con Carritix</small><b>Tu ganancia estimada, ya calculada.</b>Descuenta cargos del canal, costo de lo vendido y gastos.</div></div>
+    <div class="pair"><div class="a"><small>Hoy</small><b>Los clientes compran una vez y no vuelven.</b>No hay registro de quién compró qué ni cuándo escribirle.</div><div class="b"><small>Con Carritix</small><b>Fichas de clientes y recontacto.</b>Sabés a quién volver a escribirle y con qué historial.</div></div>
+  </div>
+  <div class="ft"><span>Carritix · Propuesta comercial</span><span>2</span></div>
+</div></section>
+
+<!-- Página 2: valor agregado -->
+<section class="page dark" id="p3"><div class="pg">
+  <span class="eyebrow">Página 2 · Valor agregado</span>
+  <h2>Por qué Carritix y no otro sistema.</h2>
+  <p class="lead">Carritix ayuda a escalar ventas a través del orden. Está pensado para quien vende por Mercado Libre y Tienda Nube, y se adapta a cómo trabaja tu negocio, no al revés.</p>
+  <div class="grid2">
+    <div class="card" style="min-height:200px"><div class="ico"><svg viewBox="0 0 24 24"><path d="M3 5h18v11H8l-5 4z"/></svg></div><h3>Hecho para vender online</h3><p>No es un programa contable ni un CRM de oficina. Trae la post-venta de Mercado Libre: preguntas, mensajes, bienvenida al comprador y reputación.</p></div>
+    <div class="card" style="min-height:200px"><div class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 17.5h7M17.5 14v7"/></svg></div><h3>Adaptado a tu negocio</h3><p>Activamos los módulos que usás y escondemos el resto. Con tu logo, tus colores y, si querés, tu propio dominio.</p></div>
+    <div class="card" style="min-height:200px"><div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c1-4 4-6 8-6s7 2 8 6"/></svg></div><h3>Soporte en español, cercano</h3><p>Hablás con quien conoce tu negocio, por mensaje y en horario laboral. Nada de tickets ni respuestas genéricas.</p></div>
+    <div class="card" style="min-height:200px"><div class="ico"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div><h3>Tus datos son tuyos</h3><p>Tu información está separada de la de otros negocios y podés pedir una copia completa cuando quieras.</p></div>
+  </div>
+  <h3 style="font-size:26px;margin-top:6px">Qué solución recibe tu negocio</h3>
+  <div class="grid2">
+    <div class="card" style="gap:8px"><span class="dot"></span><h3>Orden</h3><p>Preguntas, ventas, stock y envíos en un solo lugar, sin planillas sueltas.</p></div>
+    <div class="card" style="gap:8px"><span class="dot"></span><h3>Control</h3><p>Sabés lo que vendés, lo que ganás y lo que falta, con números claros.</p></div>
+    <div class="card" style="gap:8px"><span class="dot"></span><h3>Tiempo</h3><p>Menos tareas manuales: respuestas rápidas, avisos y pedidos al proveedor ya armados.</p></div>
+    <div class="card" style="gap:8px"><span class="dot"></span><h3>Crecimiento</h3><p>Con el negocio en orden, sumar canales, productos y clientes deja de ser un caos.</p></div>
+  </div>
+  <div class="ft"><span>Carritix · Propuesta comercial</span><span>3</span></div>
+</div></section>
+
+<!-- Cómo trabajamos -->
+<section class="page white" id="p4"><div class="pg">
+  <span class="eyebrow">Cómo trabajamos</span>
+  <h2>De la propuesta a vender en orden, en tres pasos.</h2>
+  <div style="display:flex;flex-direction:column;gap:16px;margin-top:8px">
+    <div class="card" style="flex-direction:row;gap:26px;align-items:flex-start;padding:42px 36px;min-height:170px"><span class="num" style="font-size:52px">1</span><div style="display:flex;flex-direction:column;gap:8px"><h3 style="font-size:26px">Adaptamos</h3><p style="font-size:16.5px">Definimos los módulos que necesitás, tu marca y, si querés, tu dominio. Podemos programar hasta 2 funciones a medida.</p></div></div>
+    <div class="card" style="flex-direction:row;gap:26px;align-items:flex-start;padding:42px 36px;min-height:170px"><span class="num" style="font-size:52px">2</span><div style="display:flex;flex-direction:column;gap:8px"><h3 style="font-size:26px">Cargamos y conectamos</h3><p style="font-size:16.5px">Cargamos tus productos, proveedores y clientes, y conectamos tu cuenta de Mercado Libre y de Tienda Nube.</p></div></div>
+    <div class="card" style="flex-direction:row;gap:26px;align-items:flex-start;padding:42px 36px;min-height:170px"><span class="num" style="font-size:52px">3</span><div style="display:flex;flex-direction:column;gap:8px"><h3 style="font-size:26px">Te capacitamos</h3><p style="font-size:16.5px">Hasta 2 sesiones con tu equipo para que lo uses con confianza desde el primer día.</p></div></div>
+  </div>
+  <div style="margin-top:auto;background:var(--ink);border-radius:16px;padding:32px;display:flex;align-items:center;gap:22px">
+    <img src="../marca/assets/carritix-isotipo-verde.svg" alt="" style="width:60px;height:60px;flex:none">
+    <p style="font-family:var(--display);font-weight:600;font-size:20px;line-height:1.25;color:#fff;letter-spacing:-0.015em">Orden primero. Después, escala.</p>
+  </div>
+  <div class="ft"><span>Carritix · Propuesta comercial</span><span>4</span></div>
+</div></section>
+
+<!-- Inversión -->
+<section class="page dark" id="p5"><div class="pg">
+  <span class="eyebrow">Inversión</span>
+  <h2>Una alta única. Una cuota fija.</h2>
+  <div class="card" style="border:2px solid var(--green);padding:36px;gap:26px">
+    <h3 style="font-size:19px;letter-spacing:.06em">ADAPTADO A TU NEGOCIO</h3>
+    <div style="display:flex;gap:56px;flex-wrap:wrap;border-block:1px solid var(--nl);padding-block:26px">
+      <div><div style="font-family:var(--display);font-weight:700;font-size:62px;line-height:1;letter-spacing:-0.04em;color:#fff">USD 700</div><p style="margin-top:8px">Pago único de adaptación</p></div>
+      <div><div style="font-family:var(--display);font-weight:700;font-size:62px;line-height:1;letter-spacing:-0.04em;color:var(--green)">USD 70</div><p style="margin-top:8px">Por mes, mantenimiento</p></div>
+    </div>
+    <ul class="check">
+      <li>Módulos elegidos para tu rubro, y se ocultan los que no usás</li>
+      <li>Tu logo, tus colores y tu dominio (por ejemplo, <i>crm.tunegocio.com</i>)</li>
+      <li>Carga inicial de productos, proveedores y clientes</li>
+      <li>Conexión con tu cuenta de Mercado Libre y de Tienda Nube</li>
+      <li>Mensajes y respuestas rápidas con tus políticas</li>
+      <li>Capacitación del equipo, hasta 2 sesiones</li>
+      <li>Hasta 2 funciones a medida incluidas en la adaptación</li>
+    </ul>
+  </div>
+  <h3 style="font-size:24px;margin-top:4px">Lo que recibís desde el primer día</h3>
+  <div class="grid3">
+    <div class="card" style="gap:8px;min-height:150px"><span class="dot"></span><h3>Sistema listo</h3><p>Funcionando con tus productos, proveedores y clientes cargados.</p></div>
+    <div class="card" style="gap:8px;min-height:150px"><span class="dot"></span><h3>Equipo capacitado</h3><p>Hasta 2 sesiones para que lo uses con confianza.</p></div>
+    <div class="card" style="gap:8px;min-height:150px"><span class="dot"></span><h3>Soporte cercano</h3><p>Por mensaje y en horario laboral, con quien conoce tu negocio.</p></div>
+  </div>
+  <p class="lead" style="font-size:14px;margin-top:auto">Los valores están en dólares estadounidenses, se abonan al tipo de cambio de referencia que se acuerde al firmar y no incluyen impuestos.</p>
+  <div class="ft"><span>Carritix · Propuesta comercial</span><span>5</span></div>
+</div></section>
+
+<!-- Mensualidad -->
+<section class="page fog" id="p6"><div class="pg">
+  <span class="eyebrow">Mensualidad</span>
+  <h2>Qué incluye la mensualidad.</h2>
+  <p class="lead" style="font-size:15px">La cuota cubre todo lo necesario para que el sistema funcione y siga funcionando. Vos no abrís ni pagás cuentas en otros servicios técnicos.</p>
+  <table>
+    <thead><tr><th>Concepto</th><th>Mensualidad</th><th>Se paga aparte</th></tr></thead>
+    <tbody>
+      <tr><td>Alojamiento y base de datos</td><td>Incluido</td><td>—</td></tr>
+      <tr><td>Copias de seguridad de tus datos</td><td>Incluido</td><td>—</td></tr>
+      <tr><td>Actualizaciones cuando Mercado Libre o Tienda Nube cambian algo</td><td>Incluido</td><td>—</td></tr>
+      <tr><td>Soporte por mensaje en horario laboral</td><td>Incluido</td><td>—</td></tr>
+      <tr><td>Corrección de errores del sistema</td><td>Incluido</td><td>—</td></tr>
+      <tr><td>Dominio propio</td><td>—</td><td>A tu nombre, unos USD 10 a 15 por año</td></tr>
+      <tr><td>Funciones nuevas a medida</td><td>—</td><td>Se presupuestan antes de hacerlas</td></tr>
+      <tr><td>Respuestas automáticas con IA (opcional)</td><td>—</td><td>Costo de uso real, informado y con tu aprobación</td></tr>
+      <tr><td>WhatsApp Business oficial (si se conecta)</td><td>—</td><td>Costo del proveedor, trasladado sin recargo</td></tr>
+      <tr><td>Otras herramientas o servicios de terceros que se conecten</td><td>—</td><td>Costo del proveedor, trasladado sin recargo, con tu aprobación previa</td></tr>
+    </tbody>
+  </table>
+  <div style="margin-top:auto;background:var(--mint);border-radius:14px;padding:22px 26px"><p style="color:var(--deep);font-weight:600;font-size:14.5px">Si algo no está en esta lista, te lo presupuestamos antes de hacerlo. Nunca se cobra nada que no hayas aprobado.</p></div>
+  <div class="ft"><span>Carritix · Propuesta comercial</span><span>6</span></div>
+</div></section>
+
+<!-- Pagos -->
+<section class="page white" id="p7"><div class="pg">
+  <span class="eyebrow">Cómo se paga</span>
+  <h2>Reglas claras desde el primer día.</h2>
+  <div class="grid2">
+    <div class="card" style="min-height:190px;padding:30px"><h3>Adaptación</h3><p>50 % al aceptar la propuesta y 50 % al entregar el sistema funcionando con tus datos cargados.</p></div>
+    <div class="card" style="min-height:190px;padding:30px"><h3>Mensualidad</h3><p>Se paga por adelantado, del 1 al 5 de cada mes, por transferencia o suscripción de Mercado Pago. El primer mes arranca el día que el sistema queda en uso.</p></div>
+  </div>
+  <div class="card" style="background:#FBF0DC;border-color:transparent;gap:10px;padding:32px"><h3>Si la mensualidad no se paga</h3><p style="color:#6B3E00">El sistema está alojado y mantenido por nosotros, así que funciona mientras la cuota esté al día. Si no se paga, se suspende el acceso.</p></div>
+  <div class="grid3">
+    <div class="card" style="gap:8px;min-height:190px;padding:28px"><b style="font-family:var(--display);font-size:24px;font-weight:600">Día 5</b><p>Vence la cuota. Te llega un recordatorio por mensaje.</p></div>
+    <div class="card" style="gap:8px;min-height:190px;padding:28px"><b style="font-family:var(--display);font-size:24px;font-weight:600">Día 10</b><p>Si la cuota sigue impaga, se suspende el acceso al sistema.</p></div>
+    <div class="card" style="gap:8px;min-height:190px;padding:28px"><b style="font-family:var(--display);font-size:24px;font-weight:600">Hasta 60 días después</b><p>Tus datos se conservan y podés pedir una copia completa.</p></div>
+  </div>
+  <p class="lead" style="font-size:15px">Al pagar, el sistema se reactiva con toda tu información. Pasados los 60 días sin regularizar, los datos se eliminan.</p>
+  <div style="margin-top:auto;background:var(--ink);border-radius:16px;padding:30px 32px;display:flex;align-items:center;gap:22px"><img src="../marca/assets/carritix-isotipo-verde.svg" alt="" style="width:56px;height:56px;flex:none"><p style="font-family:var(--display);font-weight:600;font-size:19px;line-height:1.25;color:#fff;letter-spacing:-0.015em">Cuota al día, sistema funcionando.</p></div>
+  <div class="ft"><span>Carritix · Propuesta comercial</span><span>7</span></div>
+</div></section>
+
+<!-- Cierre -->
+<section class="page dark" id="p8"><div class="pg" style="justify-content:space-between">
+  <img src="../marca/assets/carritix-logo-claro.svg" alt="Carritix" style="height:38px;width:auto;align-self:flex-start">
+  <div style="display:flex;flex-direction:column;gap:20px">
+    <h2 style="font-size:60px;letter-spacing:-0.035em;max-width:560px;line-height:1.05">Ordená hoy. Vendé más mañana.</h2>
+    <p class="lead" style="font-size:18px;max-width:460px">Tu negocio ya vende. Carritix lo ayuda a crecer sin descontrolarse.</p>
+  </div>
+  <div style="width:682px;height:340px;border-radius:18px;overflow:hidden;background:#000"><img src="../marca/assets/portada.jpg" alt="" style="width:1100px;height:614px;max-width:none;margin-left:-210px;margin-top:-135px"></div>
+  <div style="display:flex;flex-direction:column;gap:8px;color:var(--silver);font-size:12.5px;border-top:1px solid var(--nl);padding-top:16px">
+    <p><b style="color:#fff">Valores en dólares estadounidenses.</b> Se abonan al tipo de cambio de referencia que se acuerde al firmar. No incluyen impuestos.</p>
+    <p><b style="color:#fff">Vigencia de esta propuesta:</b> 15 días desde su entrega.</p>
+    <p><b style="color:#fff">Permanencia:</b> sin contrato mínimo. Podés dar de baja con 30 días de aviso.</p>
+  </div>
+</div></section>
+
+<script>
+  // Vista de una sola hoja (#p3) para revisar cada página por separado; sin hash se ven todas.
+  (function () {
+    var m = /^#p(\d+)$/.exec(location.hash);
+    if (m) document.querySelectorAll(".page").forEach(function (p) { if (p.id !== "p" + m[1]) p.style.display = "none"; else p.style.margin = "0"; });
+    else if (innerWidth < 840) document.body.style.zoom = innerWidth / 840;
+  })();
+</script>

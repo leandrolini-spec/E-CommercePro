@@ -38,7 +38,7 @@ dialog::backdrop {
 
 input::placeholder { text-overflow: ellipsis; }
 
-/* Pantalla de ingreso (marca Carrix): tarjeta oscura con campos y botón verde. */
+/* Pantalla de ingreso (marca Carritix): tarjeta oscura con campos y botón verde. */
 .login-card label span { color: rgb(255 255 255 / 0.8); }
 .login-card input { background: rgb(255 255 255 / 0.06); border-color: rgb(255 255 255 / 0.16); color: #fff; }
 .login-card input::placeholder { color: rgb(255 255 255 / 0.4); }
