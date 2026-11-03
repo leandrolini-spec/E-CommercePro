@@ -136,6 +136,8 @@ export type CompanyInfo = {
   driverName?: string; driverPhone?: string; driverVehicle?: string; driverPlate?: string;
   /** El chofer solo se anota en los envíos y los mensajes si esto está activado (si la logística no dice quién entrega, queda apagado). */
   driverActive?: boolean;
+  /** Proveedor al que se le mandan los pedidos por WhatsApp desde Envíos (id de Proveedores). */
+  orderSupplierId?: string;
   /** Mercado Libre: manda solo la bienvenida a las compras de productos apenas entran (apagado por defecto). */
   welcomeAuto?: boolean;
   /** Integraciones que este negocio no usa (se ocultan del menú y figuran como desactivadas). Ej: "mercadolibre", "tiendanube". */

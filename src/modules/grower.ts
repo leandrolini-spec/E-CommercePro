@@ -77,3 +77,29 @@ export function growerMessage(orders: GrowerOrder[], growerName: string) {
   const head = `Hola${first ? ` ${first}` : ""}!\n\n${orders.length === 1 ? "Te paso el pedido de productos para preparar:" : `Te paso los pedidos de productos para preparar (${orders.length}):`}`;
   return `${head}\n\n- - - - - - - - - - - - - - - -\n\n${orders.map((o, i) => block(o, i, orders.length)).join("\n\n- - - - - - - - - - - - - - - -\n\n")}\n\n- - - - - - - - - - - - - - - -\n\nCualquier duda avisame. ¡Gracias!`;
 }
+
+/** Proveedor elegido en Envíos para recibir los pedidos por WhatsApp (si no se eligió ninguno, el que figure como productor). */
+export function findSupplier(db: Db): { id: string; name: string; phone: string } | null {
+  const chosen = db.suppliers.find((x) => x.id === db.settings.company?.orderSupplierId);
+  if (chosen) return { id: chosen.id, name: (chosen.contactName || chosen.name || "").trim(), phone: chosen.phone || "" };
+  const g = findGrower(db);
+  const s = g && db.suppliers.find((x) => /productor/i.test(`${x.name} ${x.company} ${x.category ?? ""} ${x.contactName ?? ""}`));
+  return g && s ? { id: s.id, ...g } : null;
+}
+
+const SEP = "\n\n- - - - - - - - - - - - - - - -\n\n";
+/** Mensaje genérico de pedido para un proveedor (sin emojis): una ficha por pedido con el nombre de la persona y lo que pidió. */
+export function supplierMessage(orders: GrowerOrder[], supplierName: string) {
+  const first = supplierName.trim().split(/\s+/)[0] ?? "";
+  const head = `Hola${first ? ` ${first}` : ""}!\n\n${orders.length === 1 ? "Te paso el pedido para preparar:" : `Te paso los pedidos para preparar (${orders.length}):`}`;
+  const block = (o: GrowerOrder, i: number) => {
+    const lines = o.items.split(/\r?\n/).flatMap((l) => l.split(" · ")).map((l) => l.trim()).filter(Boolean);
+    return [
+      orders.length > 1 ? `*PEDIDO ${i + 1} de ${orders.length}*` : "*PEDIDO*",
+      `*Nombre:*\n${o.name || "Cliente"}`,
+      `*Encargo:*\n${lines.length ? lines.map((l) => `• ${l}`).join("\n") : "• (sin detalle cargado)"}`,
+      o.notes && o.notes.length <= 140 ? `*Nota:*\n${o.notes.replace(/\s+/g, " ")}` : "",
+    ].filter(Boolean).join("\n\n");
+  };
+  return `${head}${SEP}${orders.map(block).join(SEP)}${SEP}Cualquier duda avisame. ¡Gracias!`;
+}

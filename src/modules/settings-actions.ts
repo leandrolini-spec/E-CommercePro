@@ -51,6 +51,17 @@ export async function saveMlFollowers(fd: FormData) {
   revalidatePath("/mercadolibre");
 }
 
+/** Proveedor al que se le mandan los pedidos por WhatsApp desde Envíos (vacío = ninguno). */
+export async function saveOrderSupplier(fd: FormData) {
+  if (!(await hasValidSession())) throw new Error("No autorizado.");
+  const db = await getDb();
+  const id = str(fd, "supplierId");
+  if (id && !db.suppliers.some((s) => s.id === id)) throw new Error("Ese proveedor no existe.");
+  db.settings.company = { ...db.settings.company, orderSupplierId: id || undefined };
+  await persist(db);
+  revalidatePath("/envios");
+}
+
 /** Chofer de reparto (desde Envíos). No toca el resto de los datos de la empresa. */
 export async function saveDriver(fd: FormData) {
   if (!(await hasValidSession())) throw new Error("No autorizado.");

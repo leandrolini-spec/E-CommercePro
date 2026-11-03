@@ -258,7 +258,7 @@ export function seed(): Db {
         legalName: "Mi negocio S.R.L.", cuit: "30-00000000-0", taxCondition: "Responsable inscripto", address: "Av. Ejemplo 1234", city: "Ciudad Autónoma de Buenos Aires", province: "CABA", zip: "C1000",
         phone: "11 5555-0000", whatsapp: "11 5555-0000", email: "hola@minegocio.example", website: "https://tu-tienda.com", instagram: "@minegocio",
         accountantName: "Estudio Contable Demo", accountantEmail: "contador@ejemplo.com", mlFollowers: 1840, mlFollowersAt: isoDaysAgo(2),
-        driverName: "Carlos Medina", driverPhone: "11 5555-0199", driverVehicle: "Furgoneta blanca", driverPlate: "AB123CD", driverActive: true,
+        driverName: "Carlos Medina", driverPhone: "11 5555-0199", driverVehicle: "Furgoneta blanca", driverPlate: "AB123CD", driverActive: true, orderSupplierId: "s1",
       },
     },
     products, movements, suppliers, purchases, customers, sales, quotes, expenses, cash, opportunities, shipments, nextId: 10000, isDemo: true,
