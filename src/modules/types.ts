@@ -169,7 +169,7 @@ export type CompanyInfo = {
   };
 };
 /** Marca: logo y estilo que se ven en el menú y en los presupuestos. */
-export type BrandInfo = { logoUrl?: string; tagline?: string; color?: string; color2?: string; quoteFooter?: string; fontTitle?: string; fontSubtitle?: string; fontText?: string };
+export type BrandInfo = { logoUrl?: string; /** El logo es claro (para fondo oscuro): en el menú se muestra grande y sin la caja blanca. */ logoOnDark?: boolean; tagline?: string; color?: string; color2?: string; quoteFooter?: string; fontTitle?: string; fontSubtitle?: string; fontText?: string };
 
 export type ProjectSettings = {
   company?: CompanyInfo; brand?: BrandInfo;

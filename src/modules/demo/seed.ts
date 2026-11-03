@@ -254,6 +254,7 @@ export function seed(): Db {
       channels, categories: ["Hogar", "Tecnología", "Deportes", "Oficina"], units: ["unidad", "caja", "kg", "litro"], payMethods: ["Efectivo", "Transferencia", "Mercado Pago", "Tarjeta"],
       expenseCategories: ["Logística", "Combustible", "Publicidad", "Comisiones", "Servicios", "Alquiler", "Packaging", "Herramientas", "Impuestos", "Administración", "Otros"],
       cogsCategories: [], costs: { logisticsPerShipment: 0, boxPerPack: 0, gncPct: 0 },
+      brand: { logoUrl: "/brand/demo-logo.png", logoOnDark: true, tagline: "Tu solución integral" },
       company: {
         legalName: "Mi negocio S.R.L.", cuit: "30-00000000-0", taxCondition: "Responsable inscripto", address: "Av. Ejemplo 1234", city: "Ciudad Autónoma de Buenos Aires", province: "CABA", zip: "C1000",
         phone: "11 5555-0000", whatsapp: "11 5555-0000", email: "hola@minegocio.example", website: "https://tu-tienda.com", instagram: "@minegocio",

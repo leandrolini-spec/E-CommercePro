@@ -8,7 +8,7 @@ import type { ModuleDef } from "@/core/modules";
 import { MenuIcon } from "./menu-icons";
 
 /** `soft` es el color secundario de la marca: se usa para los títulos claros del menú en lugar del blanco. */
-export function Sidebar({ modules, name, logoUrl, soft }: { modules: ModuleDef[]; name: string; logoUrl?: string; soft: string }) {
+export function Sidebar({ modules, name, logoUrl, logoOnDark, soft }: { modules: ModuleDef[]; name: string; logoUrl?: string; logoOnDark?: boolean; soft: string }) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -53,7 +53,9 @@ export function Sidebar({ modules, name, logoUrl, soft }: { modules: ModuleDef[]
   return (
     <>
       <div className="sticky top-0 z-30 flex items-center justify-between bg-[#0a0a0a] px-4 py-3 md:hidden" style={{ color: soft }}>
-        {logoUrl ? (
+        {logoUrl && logoOnDark ? (
+          <img src={logoUrl} alt={name} className="max-h-10 w-auto max-w-32 object-contain" />
+        ) : logoUrl ? (
           <span className="flex items-center rounded-md bg-white px-2.5 py-1.5"><img src={logoUrl} alt={name} className="max-h-4 w-auto max-w-24 object-contain" /></span>
         ) : (
           <span className="truncate text-sm font-semibold">{name}</span>
@@ -63,7 +65,9 @@ export function Sidebar({ modules, name, logoUrl, soft }: { modules: ModuleDef[]
       {open && <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={() => setOpen(false)} aria-hidden />}
       <aside className={`${open ? "flex" : "hidden"} fixed inset-y-0 left-0 z-50 h-dvh w-72 max-w-[85vw] flex-col bg-[#0a0a0a] shadow-2xl md:sticky md:top-0 md:z-auto md:flex md:h-screen md:w-60 md:max-w-none md:shrink-0 md:shadow-none`}>
         <div className="flex items-center justify-between px-3 pb-5 pt-4 md:block md:pb-8 md:pt-5">
-          {logoUrl ? (
+          {logoUrl && logoOnDark ? (
+            <img src={logoUrl} alt={name} className="mx-auto max-h-28 w-auto max-w-full object-contain" />
+          ) : logoUrl ? (
             <div className="flex w-fit max-w-full items-center rounded-md bg-white px-3 py-2">
               <img src={logoUrl} alt={name} className="max-h-4 w-auto max-w-32 object-contain" />
             </div>

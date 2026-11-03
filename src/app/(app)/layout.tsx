@@ -41,7 +41,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
-      <Sidebar modules={enabledModules().filter((m) => !integrationsOff.includes(m.slug))} name={db.settings.name} logoUrl={db.settings.brand?.logoUrl || undefined} soft={brandSoft(db.settings.brand)} />
+      <Sidebar modules={enabledModules().filter((m) => !integrationsOff.includes(m.slug))} name={db.settings.name} logoUrl={db.settings.brand?.logoUrl || undefined} logoOnDark={db.settings.brand?.logoOnDark} soft={brandSoft(db.settings.brand)} />
       <main className="min-w-0 flex-1 p-4 md:p-8">
         {db.isDemo && (
           <div className="mb-4 flex items-center gap-2 rounded-md bg-warning/10 px-3 py-2 text-xs text-warning">
