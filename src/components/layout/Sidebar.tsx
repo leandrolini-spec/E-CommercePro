@@ -66,7 +66,7 @@ export function Sidebar({ modules, name, logoUrl, logoOnDark, soft }: { modules:
       <aside className={`${open ? "flex" : "hidden"} fixed inset-y-0 left-0 z-50 h-dvh w-72 max-w-[85vw] flex-col bg-[#0a0a0a] shadow-2xl md:sticky md:top-0 md:z-auto md:flex md:h-screen md:w-60 md:max-w-none md:shrink-0 md:shadow-none`}>
         <div className="flex items-center justify-between px-3 pb-5 pt-4 md:block md:pb-8 md:pt-5">
           {logoUrl && logoOnDark ? (
-            <img src={logoUrl} alt={name} className="mx-auto max-h-28 w-auto max-w-full object-contain" />
+            <img src={logoUrl} alt={name} className="max-h-12 w-auto max-w-32 object-contain" />
           ) : logoUrl ? (
             <div className="flex w-fit max-w-full items-center rounded-md bg-white px-3 py-2">
               <img src={logoUrl} alt={name} className="max-h-4 w-auto max-w-32 object-contain" />
