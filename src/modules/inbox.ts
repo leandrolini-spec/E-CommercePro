@@ -64,6 +64,20 @@ export async function listThreads(projectId: string, limit = 300): Promise<Threa
 }
 
 export async function threadMessages(projectId: string, id: string) {
-  const { data } = await service().from("inbox_messages").select("id,direction,body,at").eq("project_id", projectId).eq("thread_id", id).order("at", { ascending: true }).limit(200);
-  return (data ?? []) as { id: string; direction: "in" | "out"; body: string; at: string }[];
+  const { data } = await service().from("inbox_messages").select("id,direction,body,at,meta").eq("project_id", projectId).eq("thread_id", id).order("at", { ascending: true }).limit(200);
+  return (data ?? []) as { id: string; direction: "in" | "out"; body: string; at: string; meta?: { status?: string; template?: string; referral?: { headline?: string } } | null }[];
+}
+
+const RANK: Record<string, number> = { sent: 1, delivered: 2, read: 3 };
+
+/** Estado de entrega de un mensaje enviado por WhatsApp (enviado, entregado, leído, error). Meta puede avisar fuera de orden: el estado nunca retrocede. */
+export async function setMessageDelivery(projectId: string, phone: string, wamid: string, status: string, error?: string) {
+  const id = `${threadId("whatsapp", phone)}:${wamid}`;
+  const sb = service();
+  const { data } = await sb.from("inbox_messages").select("meta").eq("id", id).eq("project_id", projectId).maybeSingle();
+  if (!data) return;
+  const meta = (data.meta ?? {}) as Record<string, unknown>;
+  const cur = String(meta.status ?? "");
+  if (status !== "failed" && (RANK[status] ?? 0) <= (RANK[cur] ?? 0)) return;
+  await sb.from("inbox_messages").update({ meta: { ...meta, status, ...(error ? { error } : {}) } }).eq("id", id).eq("project_id", projectId);
 }

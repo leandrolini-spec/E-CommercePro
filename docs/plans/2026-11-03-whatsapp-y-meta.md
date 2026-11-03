@@ -19,6 +19,9 @@ La entrada ya está hecha: `src/app/api/messaging/whatsapp/route.ts` verifica la
 - **Mercado Libre queda aparte.** A los compradores de Mercado Libre no se les escribe por WhatsApp desde acá: se les contesta por la mensajería de Mercado Libre, como hoy. Los avisos de WhatsApp salen a clientes de Tienda Nube, ventas directas y a quien escribió por WhatsApp.
 - **Claves de las tablas.** `inbox_threads` usa el id `canal:identificador` como clave global. Con dos empresas en la misma base, un mismo teléfono podría pisar la conversación de la otra (riesgo ya anotado en la etapa 1, hoy sin efecto con un despliegue por cliente). Esta etapa no lo cambia, pero las pruebas de aislamiento lo tienen que cubrir.
 - **Modo demostración.** Conversaciones y números de Meta de ejemplo, que no salen a ningún lado.
+- **Demo primero (decidido).** Se construye todo funcionando en el modo demostración y con el código real listo para conectar: formulario de conexión, cliente de la API y webhook. Lo que depende de Meta (envío real, estados, plantillas aprobadas, gasto real) queda sin probar contra Meta hasta que un negocio conecte su cuenta.
+- **Plantillas (decidido).** Las crea cada cliente desde el sistema; no se preargan.
+- **Anuncios (decidido).** Meta (a WhatsApp, Instagram o a la tienda) y Tienda Nube. Ventana de atribución de 30 días.
 - **Pruebas.** Las pruebas con Meta real necesitan un número de prueba y una app de Meta que tenés que crear vos. No se usan claves ni se crean cuentas sin avisarte.
 
 ## 4. Lo que tenés que hacer vos antes de programar (Tarea 0)
@@ -66,7 +69,7 @@ La entrada ya está hecha: `src/app/api/messaging/whatsapp/route.ts` verifica la
 - **Se verifica:** un cliente sin consentimiento nunca recibe un aviso.
 
 **Tarea 7 · Plantillas**
-- **Qué:** tabla `whatsapp_templates` (nombre, idioma, categoría, estado, texto, variables) que se actualiza desde Meta. Pantalla que lista el estado y muestra la categoría (utilidad o marketing) antes de usarlas.
+- **Qué:** tabla `whatsapp_templates` (nombre, idioma, categoría, estado, texto, variables) que se actualiza desde Meta. Pantalla donde **cada cliente crea sus propias plantillas** y ve su estado, con la categoría (utilidad o marketing) antes de usarlas.
 - **Se verifica:** una plantilla aprobada y una rechazada se ven bien y la rechazada no se puede usar.
 
 **Tarea 8 · Avisos de envío**
@@ -98,6 +101,10 @@ La entrada ya está hecha: `src/app/api/messaging/whatsapp/route.ts` verifica la
 - **Qué:** cuando entra una venta de un cliente que tiene una conversación de anuncio dentro de la ventana de atribución (30 días desde el primer mensaje), la venta se marca "Campaña Meta" con su anuncio. Se puede corregir a mano. Se busca al cliente por teléfono con `customerByPhone`.
 - **Se verifica:** pruebas con casos de borde (dos anuncios, venta fuera de la ventana, mismo teléfono en dos empresas).
 
+**Tarea 13b · Ventas de Tienda Nube que llegan por un anuncio**
+- **Qué:** si el pedido de Tienda Nube trae el enlace de entrada con los datos del anuncio (a confirmar con un pedido real), la venta se atribuye a esa campaña sin necesidad de una conversación previa.
+- **Se verifica:** con un pedido de ejemplo con y sin datos de anuncio.
+
 **Tarea 14 · Reporte y tarjeta de retorno**
 - **Qué:** en Reportes, una vista de Meta con gasto, conversaciones, ventas, costo por venta y retorno por campaña. En el Dashboard, una tarjeta con el retorno del período. Mismo estilo y animaciones del resto del sistema.
 - **Se verifica:** las cifras del ejemplo del spec dan 3,6 veces de retorno y $8.333 por venta. Se revisa en escritorio y celular.
@@ -123,3 +130,22 @@ La entrada ya está hecha: `src/app/api/messaging/whatsapp/route.ts` verifica la
 - **Calidad del número.** Muchas bajas o reclamos bajan la calidad y limitan el envío. Por eso el consentimiento y la baja van antes de los avisos.
 - **IA hablando por el negocio.** Se activa solo si el negocio lo pide, con frenos y con registro de lo que contestó.
 - **Costos que no controlamos.** El sistema muestra la categoría de cada plantilla antes de enviar, pero lo que cobra Meta lo ve cada negocio en su cuenta.
+
+## 8. Avance (2026-11-03)
+
+**Hecho, funcionando en el modo demostración y con el código real listo para conectar:**
+- **Tarea 1:** migración `20261103000001_whatsapp_y_meta.sql` (cuenta de WhatsApp, registro de envíos, consentimiento, cuenta publicitaria de Meta y su gasto) y cifrado común en `src/core/crypto.ts`. La migración está escrita y **no se aplicó** a ninguna base.
+- **Tarea 2:** cliente de la API de WhatsApp (`src/integrations/whatsapp/client.ts`) con errores de Meta traducidos.
+- **Tarea 3:** el webhook procesa los estados de entrega, guarda de qué anuncio vino la conversación (Tarea 11) y registra el consentimiento de quien escribe.
+- **Tarea 4:** contestar desde Mensajes con la ventana de 24 horas, tildes de entrega y envío de plantilla cuando la ventana está cerrada. Mensajes ahora funciona también en la demostración, con conversaciones de WhatsApp, Instagram y Tienda Nube de ejemplo.
+- **Tarea 5:** sección WhatsApp (conexión, plantillas, avisos automáticos y registro) y estado en Configuración → Integraciones.
+- **Tareas 6 a 8 (parcial):** consentimiento por mensaje entrante y por la palabra «BAJA»; plantillas que crea cada cliente; aviso automático al mover un envío de etapa, con clave para que no se repita.
+- **Tarea 12:** conexión de la cuenta publicitaria de Meta en solo lectura, traslado diario del gasto (`/api/cron/meta-sync`) y pantalla Anuncios.
+- **Tarea 14:** pantalla Anuncios con inversión, conversaciones, ventas atribuidas, retorno y costo por venta por campaña, y sección en el Dashboard.
+
+**Sin probar contra Meta (hace falta un número y una cuenta de prueba):** envío real, estados de entrega, plantillas aprobadas, gasto real y webhook de anuncios.
+
+**Falta:**
+- **Tarea 0** (a cargo del dueño) y la prueba real de la Fase A.
+- **Tareas 9 y 13:** bienvenida por WhatsApp después de una compra y la atribución real de ventas a anuncios (hoy la atribución solo está en la demostración); **Tarea 13b** (Tienda Nube por enlace de entrada).
+- **Fase C** (asistente de IA) y **Fase E**.

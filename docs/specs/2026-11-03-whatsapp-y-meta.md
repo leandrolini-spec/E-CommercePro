@@ -58,6 +58,7 @@ Hoy un mensaje de WhatsApp entra solo a la bandeja de Mensajes, pero para contes
 - Guardar de qué anuncio vino cada conversación que empezó desde un anuncio que abre WhatsApp.
 - Conectar la cuenta publicitaria de Meta **en modo lectura** para traer gasto, clics y campañas.
 - Vincular la conversación con el cliente y con sus ventas, y marcar esas ventas como "Campaña Meta".
+- Atribuir también las ventas de Tienda Nube que llegan por un anuncio, a partir del enlace de entrada del pedido.
 - Un reporte con gasto, conversaciones, ventas, costo por venta y retorno por campaña, y una tarjeta en el Dashboard.
 
 ### Fase E · Más adelante
@@ -113,9 +114,9 @@ Hoy un mensaje de WhatsApp entra solo a la bandeja de Mensajes, pero para contes
 - Con dos empresas de prueba, ninguna ve datos de la otra.
 - El reporte de Meta coincide con el gasto que muestra el Administrador de Anuncios para el mismo período.
 
-## 8. Preguntas abiertas
+## 8. Decisiones tomadas
 
-- ¿Con qué cliente y qué número se prueba primero? ¿Tiene hoy la app WhatsApp Business en el celular? Meta tiene reglas para usar el mismo número en la app y en la API a la vez, a confirmar.
-- ¿Los anuncios de los clientes abren WhatsApp, Instagram o van a Tienda Nube? Eso define cuánto se puede atribuir automáticamente.
-- ¿Qué ventana de atribución se usa (propuesta: 30 días desde el primer mensaje del anuncio)?
-- ¿Quién crea y mantiene las plantillas: vos al instalar, o el cliente desde el sistema?
+- **Demo primero.** La primera versión funciona completa en el modo demostración, con conversaciones, plantillas y números de Meta ficticios, y queda lista para que cada negocio conecte su propio número y su cuenta publicitaria cuando quiera. No hay un cliente ni un número de prueba definidos por ahora.
+- **Anuncios.** Los clientes anuncian en Meta (con destino a WhatsApp, Instagram o a la tienda) y en Tienda Nube. Por eso la medición cubre las conversaciones que empiezan en un anuncio y también las ventas de Tienda Nube que llegan por un anuncio, usando el enlace de entrada del pedido (a confirmar con un pedido real de Tienda Nube).
+- **Ventana de atribución:** 30 días.
+- **Plantillas.** Las crea cada cliente a su manera, desde el sistema; no hay plantillas preargadas.

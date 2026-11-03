@@ -3,6 +3,8 @@ import { PageHeader, param, type SearchParams } from "@/components/shared/list";
 import { MonthPicker } from "@/components/shared/MonthPicker";
 import { Chart } from "@/components/ui/Chart";
 import { Guide } from "@/components/ui/Guide";
+import { getMetaReport } from "@/modules/meta-data";
+import { totals as metaTotals } from "@/modules/meta-report";
 import { Badge, EmptyState, KpiCard } from "@/components/ui/primitives";
 import { fdate, int, money, pct, today } from "@/lib/format";
 import { SOCIEDAD_DESDE, sociedadDb, alerts, byChannel, byProduct, costCoverage, dailySeries, kpis, PERIODS, periodRange, salesByPlace, topWithOthers, type Period } from "@/modules/calc";
@@ -35,6 +37,8 @@ export default async function DashboardPage({ searchParams }: PageProps<"/">) {
     const key = `${y}-${String(mo).padStart(2, "0")}`;
     monthHrefs[key] = `?m=${key}${withHistory ? "&h=1" : ""}`;
   }
+  const meta = await getMetaReport(all, from, to).catch(() => null);
+  const mt = meta?.connected && meta.campaigns.length ? metaTotals(meta) : null;
   const k = kpis(db, from, to);
   const cov = costCoverage(db, from, to);
   const series = dailySeries(db, from, to);
@@ -105,6 +109,21 @@ export default async function DashboardPage({ searchParams }: PageProps<"/">) {
         <KpiCard label="Resultado estimado" value={money(k.result)} hint="Ganancia menos gastos" />
         <KpiCard label="Rentabilidad %" value={pct(k.revenue ? (k.result / k.revenue) * 100 : 0)} hint="Resultado estimado sobre la facturación bruta" />
       </section>
+
+      {mt && meta && (
+        <section>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <h2 className="text-base font-semibold">Anuncios de Meta</h2>
+            <Link href="/anuncios" className="text-sm font-medium text-success hover:underline">Ver detalle →</Link>
+          </div>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <KpiCard label="Inversión en anuncios" value={money(mt.spend)} hint={`${int(mt.conversations)} conversaciones`} />
+            <KpiCard label="Ventas atribuidas" value={int(mt.sales)} hint={`Dentro de ${meta.attributionDays} días del anuncio`} />
+            <KpiCard label="Retorno" value={mt.spend > 0 ? `${mt.roas.toFixed(1).replace(".", ",")} veces` : "—"} hint="Facturado por cada peso invertido" />
+            <KpiCard label="Costo por venta" value={mt.sales > 0 ? money(mt.costPerSale) : "—"} />
+          </div>
+        </section>
+      )}
 
       <section className="grid gap-4 lg:grid-cols-3">
         <Panel title="Más vendidos"><Rank color="bg-accent" rows={top.map((p) => ({ name: p.name, text: `${p.units} u.`, ratio: p.units / (top[0]?.units || 1) }))} /></Panel>

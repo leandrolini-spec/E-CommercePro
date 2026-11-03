@@ -1,5 +1,6 @@
 "use server";
 
+import { notifyShipmentStage } from "@/integrations/whatsapp/notify";
 import { carrierOf, isOwn } from "./carriers";
 import { revalidatePath } from "next/cache";
 import { isoDaysAgo, today } from "@/lib/format";
@@ -905,6 +906,8 @@ export async function moveShipment(id: string, stage: string) {
   if (stage === "en_viaje" && isOwn(x.carrier) && !x.courier && c.driverActive && c.driverName) { x.courier = c.driverName; x.courierPhone = c.driverPhone ?? ""; x.vehicle = c.driverVehicle ?? ""; x.plate = c.driverPlate ?? ""; }
   if (stage === "entregado" && !x.deliveredAt) x.deliveredAt = today();
   await persist(db);
+  // Aviso automático al cliente por WhatsApp si esa etapa lo tiene activado (nunca frena el cambio de etapa).
+  await notifyShipmentStage(db, x, stage);
   shipPaths();
 }
 

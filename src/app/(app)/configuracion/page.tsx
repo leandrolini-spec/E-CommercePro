@@ -1,4 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
+import { adAccountState } from "@/integrations/meta-ads/sync";
+import { waAccountStatus } from "@/integrations/whatsapp/account";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ColorField } from "@/components/shared/ColorField";
@@ -327,6 +329,9 @@ async function Integrations({ alerts, off }: { alerts: boolean; off: string[] })
     ml = a.data; tn = b.data;
   }
   const meta = metaConfigured();
+  const demoMode = !isSupabase() && Boolean((await getDb()).isDemo);
+  const waOk = isSupabase() ? (await waAccountStatus(await activeProjectId()).catch(() => ({ connected: false }))).connected : demoMode;
+  const adsOk = isSupabase() ? (await adAccountState(await activeProjectId()).catch(() => ({ connected: false }))).connected : demoMode;
   const stores: Integration[] = [
     { id: "mercadolibre", name: "Mercado Libre", detail: ml?.nickname ? String(ml.nickname) : "", blurb: "Ventas, publicaciones, preguntas y mensajes de compradores.", status: ml?.status === "connected" ? "ok" : "off", href: "/mercadolibre", logo: "/brand/mercadolibre-logo.png", initials: "ML" },
     { id: "tiendanube", name: "Tienda Nube", detail: tn?.store_name ? String(tn.store_name) : "", blurb: "Pedidos, productos, stock y clientes de tu tienda.", status: tn?.status === "connected" ? "ok" : "off", href: "/tiendanube", logo: "/brand/tiendanube-logo.png", initials: "TN" },
@@ -336,7 +341,8 @@ async function Integrations({ alerts, off }: { alerts: boolean; off: string[] })
     { name: "VTEX", detail: "", blurb: "Plataforma de comercio para tiendas grandes.", status: "soon", logo: "/brand/vtex-logo.png", initials: "V" },
   ];
   const messaging: Integration[] = [
-    { id: "whatsapp", name: "WhatsApp", detail: "mensajes de clientes", blurb: "Los mensajes entran solos a la bandeja de Mensajes.", status: meta ? "ok" : "off", okLabel: "Listo", href: "/mensajes", logo: "/brand/whatsapp-logo.png", initials: "WA" },
+    { id: "whatsapp", name: "WhatsApp", detail: "mensajes de clientes", blurb: "Contestá desde Mensajes, creá tus plantillas y activá avisos automáticos de envío.", status: waOk ? "ok" : "off", okLabel: "Conectado", href: "/whatsapp", logo: "/brand/whatsapp-logo.png", initials: "WA" },
+    { id: "anuncios", name: "Anuncios de Meta", detail: "inversión y ventas", blurb: "Cuánto gastás en cada campaña y cuántas ventas deja.", status: adsOk ? "ok" : "off", okLabel: "Conectada", href: "/anuncios", initials: "M" },
     { id: "instagram", name: "Instagram", detail: "mensajes directos", blurb: "Los mensajes directos entran solos a la bandeja de Mensajes.", status: meta ? "ok" : "off", okLabel: "Listo", href: "/mensajes", logo: "/brand/instagram-logo.png", initials: "IG" },
     { name: "ntfy", detail: "Notificaciones de celular", blurb: "Notificaciones cuando entra una pregunta o un mensaje.", status: alerts ? "ok" : "off", okLabel: "Activos", href: "/mensajes", logo: "/brand/ntfy-logo.svg", initials: "!" },
   ];

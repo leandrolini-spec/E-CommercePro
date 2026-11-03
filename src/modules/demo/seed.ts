@@ -260,6 +260,18 @@ export function seed(): Db {
         phone: "11 5555-0000", whatsapp: "11 5555-0000", email: "hola@minegocio.example", website: "https://tu-tienda.com", instagram: "@minegocio",
         accountantName: "Estudio Contable Demo", accountantEmail: "contador@ejemplo.com", mlFollowers: 1840, mlFollowersAt: isoDaysAgo(2),
         driverName: "Carlos Medina", driverPhone: "11 5555-0199", driverVehicle: "Furgoneta blanca", driverPlate: "AB123CD", driverActive: true, orderSupplierId: "s1",
+        // WhatsApp con la API oficial: plantillas de ejemplo (las crea cada negocio a su manera) y avisos automáticos de envío.
+        whatsappApi: {
+          templates: [
+            { id: "t1", name: "pedido_en_viaje", category: "UTILITY", language: "es_AR", status: "APPROVED", body: "Hola {{1}}! Tu pedido de {{2}} ya salió. Seguilo acá: {{3}}", vars: ["nombre", "producto", "seguimiento"], createdAt: isoDaysAgo(20) },
+            { id: "t2", name: "pedido_entregado", category: "UTILITY", language: "es_AR", status: "APPROVED", body: "Hola {{1}}! Tu pedido fue entregado. Gracias por comprar en {{2}}.", vars: ["nombre", "negocio"], createdAt: isoDaysAgo(20) },
+            { id: "t3", name: "promo_mates", category: "MARKETING", language: "es_AR", status: "PENDING", body: "Hola {{1}}! Esta semana tenemos mates con 15 % de descuento en {{2}}.", vars: ["nombre", "negocio"], createdAt: isoDaysAgo(1) },
+          ],
+          automations: [
+            { stage: "en_viaje", enabled: true, templateId: "t1" },
+            { stage: "entregado", enabled: true, templateId: "t2" },
+          ],
+        },
       },
     },
     products, movements, suppliers, purchases, customers, sales, quotes, expenses, cash, opportunities, shipments, nextId: 10000, isDemo: true,

@@ -1,6 +1,7 @@
 import { after } from "next/server";
 import { metaSignatureOk, metaVerify } from "@/lib/meta-webhook";
-import { addInboxMessage, customerByPhone } from "@/modules/inbox";
+import { setConsent } from "@/integrations/whatsapp/account";
+import { addInboxMessage, customerByPhone, setMessageDelivery } from "@/modules/inbox";
 import { projectForChannel } from "@/modules/channel-project";
 
 export const maxDuration = 60;
@@ -41,10 +42,20 @@ export async function POST(request: Request) {
         for (const m of (v.messages ?? []) as R[]) {
           const phone = String(m.from ?? "");
           if (!phone) continue;
+          const body = bodyOf(m);
+          // Si la conversación empezó desde un anuncio, Meta manda de cuál: se guarda para medir las ventas que deja.
+          const ref = (m.referral ?? null) as R | null;
+          const referral = ref ? { adId: String(ref.source_id ?? ""), sourceType: String(ref.source_type ?? ""), headline: String(ref.headline ?? ""), sourceUrl: String(ref.source_url ?? ""), clickId: String(ref.ctwa_clid ?? "") } : undefined;
           await addInboxMessage(projectId, {
             channel: "whatsapp", kind: "mensaje", externalId: phone, name: names.get(phone) || `+${phone}`, phone: `+${phone}`, link: `https://wa.me/${phone}`,
             customerId: await customerByPhone(projectId, phone),
-          }, { id: String(m.id), direction: "in", body: bodyOf(m), at: new Date(Number(m.timestamp) * 1000 || Date.now()).toISOString() });
+          }, { id: String(m.id), direction: "in", body, at: new Date(Number(m.timestamp) * 1000 || Date.now()).toISOString(), meta: referral ? { referral } : undefined });
+          // Quien escribe al número acepta recibir respuestas y avisos; "BAJA" o "STOP" lo quita.
+          await setConsent(projectId, phone, !/^(baja|stop)$/i.test(body.trim()), "mensaje entrante");
+        }
+        // Estado de cada mensaje enviado: enviado, entregado, leído o con error.
+        for (const st of (v.statuses ?? []) as R[]) {
+          if (st.recipient_id && st.id) await setMessageDelivery(projectId, String(st.recipient_id), String(st.id), String(st.status), st.errors?.[0]?.title ? String(st.errors[0].title) : undefined);
         }
       }
     } catch (e) {

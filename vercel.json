@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/tn-sync",
       "schedule": "30 9 * * *"
+    },
+    {
+      "path": "/api/cron/meta-sync",
+      "schedule": "0 10 * * *"
     }
   ]
 }

@@ -4,6 +4,8 @@ import type { ReactNode } from "react";
 const PATHS: Record<string, ReactNode> = {
   "": <><rect x="3" y="3" width="7" height="9" rx="1" /><rect x="14" y="3" width="7" height="5" rx="1" /><rect x="14" y="12" width="7" height="9" rx="1" /><rect x="3" y="16" width="7" height="5" rx="1" /></>,
   mensajes: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />,
+  whatsapp: <><path d="M3 21l1.7-5.1A8.5 8.5 0 1 1 8.2 19.4z" /><path d="M9 8.5c0 3.5 3 6.5 6.5 6.5l1.2-1.4a.8.8 0 0 0-.1-1.1l-1.4-.8a.8.8 0 0 0-.9.1l-.6.5a5 5 0 0 1-2.2-2.2l.5-.6a.8.8 0 0 0 .1-.9l-.8-1.4a.8.8 0 0 0-1.1-.1z" /></>,
+  anuncios: <><path d="m3 11 15-7v16L3 13z" /><path d="M7 13.5V19a1.5 1.5 0 0 0 3 0v-4" /><path d="M21 9.5v5" /></>,
   clientes: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></>,
   ventas: <><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" /></>,
   envios: <><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" /><path d="M15 18H9" /><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" /><circle cx="17" cy="18" r="2" /><circle cx="7" cy="18" r="2" /></>,

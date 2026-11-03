@@ -138,6 +138,8 @@ export type CompanyInfo = {
   driverActive?: boolean;
   /** Proveedor al que se le mandan los pedidos por WhatsApp desde Envíos (id de Proveedores). */
   orderSupplierId?: string;
+  /** WhatsApp con la API oficial de Meta: plantillas que crea el negocio y avisos automáticos de envío. */
+  whatsappApi?: import("./whatsapp").WaConfig;
   /** Mercado Libre: manda solo la bienvenida a las compras de productos apenas entran (apagado por defecto). */
   welcomeAuto?: boolean;
   /** Integraciones que este negocio no usa (se ocultan del menú y figuran como desactivadas). Ej: "mercadolibre", "tiendanube". */

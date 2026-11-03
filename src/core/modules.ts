@@ -7,6 +7,8 @@ export const MODULES: ModuleDef[] = [
   { slug: "tiendanube", label: "Tienda Nube", enabled: true, logo: "/brand/tiendanube.png", logoHeight: 15 },
   { slug: "", label: "Dashboard", enabled: true },
   { slug: "mensajes", label: "Mensajes", enabled: true },
+  { slug: "whatsapp", label: "WhatsApp", enabled: true },
+  { slug: "anuncios", label: "Anuncios", enabled: true },
   { slug: "clientes", label: "Clientes", enabled: true },
   { slug: "recontacto", label: "Recontacto", enabled: true },
   { slug: "ventas", label: "Ventas", enabled: true },

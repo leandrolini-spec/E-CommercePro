@@ -11,6 +11,13 @@ import { saveAlerts, saveAndTestAlerts } from "@/modules/alerts-actions";
 import { Guide } from "@/components/ui/Guide";
 import { Badge } from "@/components/ui/primitives";
 import { answerQuestion, replyToBuyer } from "@/integrations/mercadolibre/actions";
+import { waAccountStatus } from "@/integrations/whatsapp/account";
+import { sendWhatsAppReply } from "@/integrations/whatsapp/actions";
+import { WaTemplateSend } from "@/components/shared/WaTemplateSend";
+import { waContext } from "@/integrations/whatsapp/context";
+import { demoMlData } from "@/modules/demo/mercadolibre";
+import { demoThreads, deliveryOf } from "@/modules/demo/whatsapp";
+import { DELIVERY_LABEL, windowLeft, type WaDelivery } from "@/modules/whatsapp";
 import { mlData } from "@/integrations/mercadolibre/data";
 import { fdate, isoDaysAgo, money } from "@/lib/format";
 import { saleTotals } from "@/modules/calc";
@@ -45,15 +52,17 @@ const GROUPS: { channel: InboxChannel; folders: { key: Folder; label: string }[]
 const STATES = [["abiertos", "Abiertos"], ["sinleer", "Sin leer"], ["antiguas", "Antiguas"], ["resueltos", "Resueltos"], ["todos", "Todos"]] as const;
 /** Una consulta abierta con más de 7 días ya no es "para responder ahora": pasa a Antiguas para no tapar lo reciente. */
 
-type Msg = { id: string; out: boolean; body: string; at: string };
+type Msg = { id: string; out: boolean; body: string; at: string; delivery?: WaDelivery; template?: string; referral?: string };
 type Item = {
   id: string; channel: InboxChannel; kind: string; name: string; subject: string; preview: string; at: string; unread: boolean; open: boolean;
   phone: string; email: string; handle: string; customerId: string | null; link: string; saved: boolean;
   /** Cómo se responde desde acá (solo Mercado Libre). */
-  reply?: { type: "question"; id: string } | { type: "buyer"; packId: string; buyerId: string };
+  reply?: { type: "question"; id: string } | { type: "buyer"; packId: string; buyerId: string } | { type: "whatsapp"; id: string };
   /** Clave para marcar como leído un mensaje o pregunta de Mercado Libre desde el CRM. */
   readKey?: string;
   messages?: Msg[]; itemUrl?: string;
+  /** Nombre de la campaña si la conversación empezó desde un anuncio. */
+  referral?: string;
 };
 
 /** Punto de estado: azul = sin leer, naranja = leída pero sin responder, verde = respondida o resuelta. */
@@ -99,17 +108,18 @@ export default async function MensajesPage({ searchParams }: { searchParams: Pro
     supa ? mlData(projectId, { messages: 30 }).catch(() => null) : Promise.resolve(null),
     supa ? readKeys(projectId).catch(() => new Set<string>()) : Promise.resolve(new Set<string>()),
   ]);
+  const demo = !supa && Boolean(db.isDemo);
   const nameOfCustomer = (id: string | null) => db.customers.find((c) => c.id === id)?.name ?? "";
 
   const items: Item[] = [];
-  if (supa) {
+  if (supa || demo) {
     for (const t of savedRows) {
       items.push({
         id: t.id, channel: t.channel, kind: t.kind, name: t.contact_name || "Sin nombre", subject: t.subject, preview: t.last_message, at: t.last_at, unread: t.unread, open: t.status === "abierto",
-        phone: t.contact_phone, email: t.contact_email, handle: t.contact_handle, customerId: t.customer_id, link: t.link, saved: true,
+        phone: t.contact_phone, email: t.contact_email, handle: t.contact_handle, customerId: t.customer_id, link: t.link, saved: true, reply: t.channel === "whatsapp" ? { type: "whatsapp", id: t.id } : undefined,
       });
     }
-    const ml = mlAll;
+    const ml = mlAll ?? (demo ? demoMlData(db) : null);
     if (ml) {
       const since = isoDaysAgo(30);
       for (const q of ml.questions) {
@@ -139,6 +149,15 @@ export default async function MensajesPage({ searchParams }: { searchParams: Pro
           reply: buyerId ? { type: "buyer", packId: orderId, buyerId } : undefined, messages: sorted.slice(-10).map((m) => ({ id: m.id, out: !m.fromBuyer, body: m.text || "(mensaje vacío o adjunto)", at: m.date })),
         });
       }
+    }
+  }
+  if (demo) {
+    for (const t of demoThreads(db)) {
+      items.push({
+        id: t.id, channel: t.channel, kind: t.kind, name: t.name, subject: t.subject, preview: t.preview, at: t.at, unread: t.unread, open: t.open, phone: t.phone, email: t.email, handle: t.handle,
+        customerId: t.customerId, link: t.link, saved: true, referral: t.referral?.campaign, reply: t.channel === "whatsapp" ? { type: "whatsapp", id: t.id } : undefined,
+        messages: t.messages.map((m) => ({ id: m.id, out: m.out, body: m.body, at: m.at, delivery: deliveryOf(m), template: m.template })),
+      });
     }
   }
   const ts = (iso: string) => Date.parse(iso) || 0;
@@ -184,7 +203,7 @@ export default async function MensajesPage({ searchParams }: { searchParams: Pro
   const sel = items.find((t) => t.id === selId) ?? null;
   // Abrir una conversación de Mercado Libre la marca como leída.
   if (supa && sel && !sel.saved && sel.readKey && sel.unread) await markKeysRead(projectId, [sel.readKey]).catch(() => {});
-  const selMessages: Msg[] = sel ? (sel.messages ?? (await threadMessages(projectId, sel.id)).map((m) => ({ id: m.id, out: m.direction === "out", body: m.body, at: m.at }))) : [];
+  const selMessages: Msg[] = sel ? (sel.messages ?? (await threadMessages(projectId, sel.id)).map((m) => ({ id: m.id, out: m.direction === "out", body: m.body, at: m.at, delivery: (m.meta?.status as WaDelivery | undefined), template: m.meta?.template, referral: m.meta?.referral?.headline }))) : [];
 
   const qs = (over: Record<string, string>) => {
     const u = new URLSearchParams();
@@ -195,6 +214,7 @@ export default async function MensajesPage({ searchParams }: { searchParams: Pro
   };
   const base = process.env.APP_BASE_URL?.replace(/\/$/, "") ?? "https://tu-crm.vercel.app";
   const metaOk = metaConfigured();
+  const waConnected = supa ? (await waAccountStatus(projectId).catch(() => ({ connected: false }))).connected : demo;
 
   const datosLink: ReactNode = (
     <Link href={qs({ datos: onlyMissing ? "" : "1", hilo: "" })} className={`mb-2 flex items-center justify-between gap-2 rounded-md border px-2.5 py-1.5 text-sm font-medium ${onlyMissing ? "border-[#d97706] bg-[#d97706] text-white" : "border-[#d97706]/40 bg-[#d97706]/10 text-[#b45309] hover:bg-[#d97706]/20"}`}>
@@ -310,7 +330,8 @@ export default async function MensajesPage({ searchParams }: { searchParams: Pro
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2"><TypeTag t={sel} /><span className="text-xs text-muted">{CH[sel.channel].label}</span>{!sel.open && <Badge tone="success">Resuelta</Badge>}</div>
                   <h2 className="mt-1.5 text-base font-semibold">{sel.name}</h2>
-                  {sel.subject && <p className="text-sm text-muted">{sel.itemUrl ? <a href={sel.itemUrl} target="_blank" rel="noreferrer" className="text-primary hover:underline">{sel.subject} ↗</a> : sel.subject}</p>}
+                  {(sel.referral || selMessages.some((m) => m.referral)) && <p className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-mint px-2.5 py-1 text-xs font-semibold text-success"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-accent" />Vino desde un anuncio de Meta{sel.referral ? `: ${sel.referral}` : ""}</p>}
+                  {sel.subject && !sel.referral && <p className="text-sm text-muted">{sel.itemUrl ? <a href={sel.itemUrl} target="_blank" rel="noreferrer" className="text-primary hover:underline">{sel.subject} ↗</a> : sel.subject}</p>}
                   {(sel.phone || sel.email || sel.handle) && <p className="mt-0.5 text-xs text-muted">{[sel.phone, sel.email, sel.handle].filter(Boolean).join(" · ")}</p>}
                   {sel.customerId && nameOfCustomer(sel.customerId) && <p className="mt-0.5 text-xs text-muted">Cliente del CRM: {nameOfCustomer(sel.customerId)}</p>}
                   {saleLine(sel) && <p className="mt-1 inline-block rounded-md bg-bg px-2 py-1 text-xs font-medium text-ink">{saleLine(sel)}</p>}
@@ -360,7 +381,16 @@ export default async function MensajesPage({ searchParams }: { searchParams: Pro
                   <div key={m.id} className={`flex ${m.out ? "justify-end" : ""}`}>
                     <div className={`max-w-[85%] rounded-lg px-3 py-2 text-sm shadow-sm ${m.out ? "bg-primary/10" : "border border-line bg-surface"}`}>
                       <p className="whitespace-pre-wrap break-words">{m.body}</p>
-                      <p className="mt-1 text-[11px] text-muted">{m.out ? "Vos" : sel.name} · {dt(m.at)}</p>
+                      <p className="mt-1 flex flex-wrap items-center gap-x-1.5 text-[11px] text-muted">
+                        <span>{m.out ? "Vos" : sel.name} · {dt(m.at)}</span>
+                        {m.template && <span className="rounded-full bg-mint px-1.5 py-px font-medium text-success">Plantilla: {m.template}</span>}
+                        {m.out && sel.channel === "whatsapp" && m.delivery && (
+                          <span className={`inline-flex items-center gap-1 font-medium ${m.delivery === "read" ? "text-info" : m.delivery === "failed" ? "text-danger" : ""}`}>
+                            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-hidden>{m.delivery === "sent" ? <path d="m5 10.5 3.5 3.5L15 6.5" /> : m.delivery === "failed" ? <path d="m6 6 8 8M14 6l-8 8" /> : <><path d="m2.5 10.5 3.5 3.5 6-8" /><path d="m9 13.5 1 1 6-8" /></>}</svg>
+                            {DELIVERY_LABEL[m.delivery]}
+                          </span>
+                        )}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -373,8 +403,23 @@ export default async function MensajesPage({ searchParams }: { searchParams: Pro
                 {sel.reply?.type === "buyer" && (
                   <ReplyForm action={replyToBuyer.bind(null, sel.reply.packId, sel.reply.buyerId)} max={350} multi label="Enviar mensaje" placeholder="Escribí tu mensaje al comprador…" hint="Se envía por la mensajería de Mercado Libre" quick={quickFor(db.settings.company, db.settings.name, { nombre: looksLikeUser(customerOf(sel) ) ? "" : (sel.name === "Comprador" ? "" : sel.name), productos: saleOf(sel) ? saleOf(sel)!.items.map((i) => db.products.find((p) => p.id === i.productId)?.name ?? "").filter(Boolean).join(", ") : "" })} />
                 )}
+                {sel.reply?.type === "whatsapp" && (() => {
+                  const w = windowLeft(selMessages.filter((m) => !m.out).at(-1)?.at);
+                  const tpls = (db.settings.company?.whatsappApi?.templates ?? []).filter((t) => t.status === "APPROVED").map((t) => ({ id: t.id, name: t.name, body: t.body, vars: t.vars }));
+                  return (
+                    <div className="w-full space-y-3">
+                      <p className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${w.open ? "bg-mint text-success" : "bg-warning/10 text-warning"}`}>
+                        <span aria-hidden className={`h-2 w-2 rounded-full ${w.open ? "bg-accent" : "bg-warning"}`} />
+                        {w.open ? `Podés contestar libremente por ${w.label}` : "Pasaron más de 24 horas: solo podés escribir con una plantilla aprobada"}
+                      </p>
+                      {w.open
+                        ? <ReplyForm action={sendWhatsAppReply.bind(null, sel.id)} max={4000} label="Enviar por WhatsApp" placeholder="Escribí tu respuesta…" hint="Se envía por la API oficial de WhatsApp" quick={quickFor(db.settings.company, db.settings.name, { nombre: sel.name.split(" ")[0] ?? "", productos: saleOf(sel) ? saleOf(sel)!.items.map((i) => db.products.find((p) => p.id === i.productId)?.name ?? "").filter(Boolean).join(", ") : "" })} />
+                        : <WaTemplateSend threadId={sel.id} customerName={sel.name} values={waContext(db, sel.id.replace(/^whatsapp:/, ""), sel.name)} templates={tpls} />}
+                    </div>
+                  );
+                })()}
                 {sel.channel === "mercadolibre" && !sel.reply && <p className="text-sm text-muted">{sel.open ? "Esta conversación se contesta desde Mercado Libre." : "Conversación respondida."} <Link href={sel.link} className="text-primary hover:underline">Abrir en la sección Mercado Libre →</Link></p>}
-                {sel.channel !== "mercadolibre" && (
+                {sel.channel !== "mercadolibre" && sel.reply?.type !== "whatsapp" && (
                   <div className="flex flex-wrap items-center gap-2">
                     <ContactButtons name={sel.name} phone={sel.phone} email={sel.email} />
                     {sel.channel === "instagram" && <a href={sel.link || "https://www.instagram.com/direct/inbox/"} target="_blank" rel="noreferrer" className="inline-flex h-8 items-center rounded-md border border-line px-2.5 text-xs font-medium hover:bg-bg">Abrir en Instagram ↗</a>}
@@ -393,10 +438,10 @@ export default async function MensajesPage({ searchParams }: { searchParams: Pro
         <summary className="flex cursor-pointer flex-wrap items-center gap-2 font-medium">
           Canales conectados
           <Badge tone="success">Mercado Libre</Badge><Badge tone="success">Tienda Nube</Badge>
-          <Badge tone={metaOk ? "success" : "warning"}>{`WhatsApp ${metaOk ? "listo" : "sin conectar"}`}</Badge><Badge tone={metaOk ? "success" : "warning"}>{`Instagram ${metaOk ? "listo" : "sin conectar"}`}</Badge>
+          <Badge tone={waConnected ? "success" : "warning"}>{`WhatsApp ${waConnected ? (demo ? "conectado (demo)" : "conectado") : "sin conectar"}`}</Badge><Badge tone={demo || metaOk ? "success" : "warning"}>{`Instagram ${demo ? "conectado (demo)" : metaOk ? "listo" : "sin conectar"}`}</Badge>
         </summary>
         <div className="mt-3 space-y-2 text-muted">
-          <p>Mercado Libre y Tienda Nube ya están activos. WhatsApp e Instagram están preparados: cuando Meta se pueda conectar, cada mensaje entra solo, sin tocar código.</p>
+          <p>{demo ? "Estás viendo conversaciones de ejemplo. Cada negocio conecta su propio número de WhatsApp desde la sección WhatsApp y, desde ahí, contesta sin salir del sistema." : "Mercado Libre y Tienda Nube ya están activos. Conectá tu número de WhatsApp desde la sección WhatsApp para contestar desde acá; Instagram queda preparado para recibir mensajes."}</p>
           <ol className="list-decimal space-y-1 pl-5">
             <li>En <strong>developers.facebook.com</strong>, en tu app de Meta, agregá los productos WhatsApp y/o Instagram y activá el permiso de mensajes.</li>
             <li>En Vercel → Variables de entorno cargá <code>META_APP_SECRET</code> y <code>META_VERIFY_TOKEN</code> (una palabra clave que elijas). Opcional para Instagram: <code>INSTAGRAM_ACCESS_TOKEN</code>, para ver nombre y usuario.</li>
@@ -404,7 +449,7 @@ export default async function MensajesPage({ searchParams }: { searchParams: Pro
               <ul className="mt-1 space-y-0.5 pl-1"><li>WhatsApp: <code className="break-all">{base}/api/messaging/whatsapp</code></li><li>Instagram: <code className="break-all">{base}/api/messaging/instagram</code></li></ul>
             </li>
           </ol>
-          <Guide title="¿Cómo respondo en cada canal?">En WhatsApp, Instagram y Tienda Nube las respuestas las enviás vos: el botón abre el chat o el correo con el contacto listo. Las de Mercado Libre se contestan acá mismo.</Guide>
+          <Guide title="¿Cómo respondo en cada canal?">Las de Mercado Libre y las de WhatsApp (con tu número conectado) se contestan acá mismo. En Instagram y Tienda Nube las enviás vos desde cada uno: el botón abre el chat o el correo con el contacto listo.</Guide>
         </div>
       </details>
     </div>
