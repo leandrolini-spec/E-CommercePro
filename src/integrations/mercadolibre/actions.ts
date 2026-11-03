@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { hasValidSession } from "@/core/session";
 import { MAX_MSG, MAX_MSGS, splitMessages } from "@/modules/quick-replies";
-import { activeProjectId, service } from "@/modules/repo/supabase";
+import { demoAnswer, demoReply } from "@/modules/demo/mercadolibre";
+import { activeProjectId, isSupabase, service } from "@/modules/repo/supabase";
 import { MlError, mlPost } from "./client";
 import { conversationIdOf } from "./data";
 import { autoWelcome, sendWelcomeMessages, closeDelivered, settleRefunds, syncClaims, refreshRecentConversations, backfill, drain, processJob, queueMissingShipments } from "./sync";
@@ -129,6 +130,7 @@ export async function replyToBuyer(packId: string, buyerId: string, fd: FormData
   if (parts.length > MAX_MSGS) return { error: `Se pueden mandar hasta ${MAX_MSGS} mensajes seguidos (escribiste ${parts.length}).` };
   const tooLong = parts.findIndex((m) => m.length > MAX_MSG);
   if (tooLong >= 0) return { error: `Mercado Libre acepta hasta ${MAX_MSG} caracteres por mensaje (${parts.length > 1 ? `el mensaje ${tooLong + 1} tiene` : "escribiste"} ${parts[tooLong].length}).` };
+  if (!isSupabase()) { demoReply(packId, parts.join("\n")); revalidatePath("/mercadolibre"); return; } // demostración: queda solo en pantalla
   const projectId = await activeProjectId();
   const { data: acc } = await service().from("ml_accounts").select("ml_user_id").eq("project_id", projectId).single();
   if (!acc) return { error: "Mercado Libre no está conectado." };
@@ -156,6 +158,7 @@ export async function answerQuestion(questionId: string, fd: FormData): Promise<
   const text = String(fd.get("text") ?? "").trim();
   if (!text) return { error: "Escribí la respuesta." };
   if (text.length > 2000) return { error: "La respuesta es demasiado larga (máximo 2000 caracteres)." };
+  if (!isSupabase()) { demoAnswer(questionId, text); revalidatePath("/mercadolibre"); return; } // demostración: queda solo en pantalla
   const projectId = await activeProjectId();
   try {
     await mlPost(projectId, "/answers", { question_id: Number(questionId), text });

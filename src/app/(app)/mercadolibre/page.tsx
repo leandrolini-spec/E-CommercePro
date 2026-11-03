@@ -14,6 +14,7 @@ import { answerQuestion, reloadAll, replyToBuyer, syncNow } from "@/integrations
 import { saveCustomerData } from "@/modules/actions";
 import { ITEM_STATUS, mlData, Q_STATUS, REPUTATION } from "@/integrations/mercadolibre/data";
 import { mlStatus } from "@/integrations/mercadolibre/status";
+import { demoMlData } from "@/modules/demo/mercadolibre";
 import { byProduct, kpis, PERIODS, periodRange, saleTotals, type Period } from "@/modules/calc";
 import { looksLikeUser, mlUserOf } from "@/modules/customers";
 import { getDb } from "@/modules/data";
@@ -38,14 +39,16 @@ export default async function MercadoLibrePage({ searchParams }: PageProps<"/mer
   const sp = (await searchParams) as SearchParams;
   const db = await getDb();
   const st = isSupabase() ? await mlStatus(await activeProjectId()) : null;
-  const connected = st?.account?.status === "connected";
+  // Modo demostración (sin base real): la cuenta figura conectada y los datos de Mercado Libre son de ejemplo.
+  const demo = !st && !!db.isDemo;
+  const connected = demo || st?.account?.status === "connected";
   const tab = TABS.find((t) => t[0] === param(sp, "tab"))?.[0] ?? "resumen";
-  const data = connected ? await mlData(await activeProjectId()) : null;
+  const data = demo ? demoMlData(db) : connected ? await mlData(await activeProjectId()) : null;
   const mlDb: Db = { ...db, sales: db.sales.filter((x) => x.channel === "Mercado Libre") };
 
   return (
     <div {...themeProps("ml", "space-y-6")}>
-      <PageHeader title="Mercado Libre" banner={bannerOf("ml")} logo={{ src: "/brand/mercadolibre-color.png", height: 40 }} subtitle={connected ? `Cuenta ${st!.account!.nickname ?? ""}` : `Sitio de referencia: ${db.settings.mlSite}`} />
+      <PageHeader title="Mercado Libre" banner={bannerOf("ml")} logo={{ src: "/brand/mercadolibre-color.png", height: 40 }} subtitle={demo ? "Cuenta NEGOCIO_DEMO · datos de demostración" : connected ? `Cuenta ${st!.account!.nickname ?? ""}` : `Sitio de referencia: ${db.settings.mlSite}`} />
       {param(sp, "conectado") && <Alert tone="success" title="Cuenta conectada">Se está trayendo el historial. En unos minutos aparecen las ventas, publicaciones y preguntas.</Alert>}
       {param(sp, "error") && <Alert tone="danger" title="No se pudo conectar">{param(sp, "error")}</Alert>}
 
@@ -54,19 +57,19 @@ export default async function MercadoLibrePage({ searchParams }: PageProps<"/mer
           <div>
             <p className="flex flex-wrap items-center gap-2 font-semibold max-md:justify-center">
               Conexión{" "}
-              {!st ? <Badge>Sin base de datos</Badge> : !st.configured ? <Badge tone="warning">Falta configurar</Badge> : connected ? <Badge tone="success">Conectado</Badge> : st.account ? <Badge tone="danger">Requiere reconectar</Badge> : <Badge>No conectado</Badge>}
-              {connected && st!.pending > 0 && <Badge tone="info">Importando… {st!.pending} pendientes</Badge>}
+              {demo ? <Badge tone="success">Conectado (demo)</Badge> : !st ? <Badge>Sin base de datos</Badge> : !st.configured ? <Badge tone="warning">Falta configurar</Badge> : connected ? <Badge tone="success">Conectado</Badge> : st.account ? <Badge tone="danger">Requiere reconectar</Badge> : <Badge>No conectado</Badge>}
+              {st && connected && st.pending > 0 && <Badge tone="info">Importando… {st!.pending} pendientes</Badge>}
             </p>
             <p className="mt-1 text-sm text-muted">
-              {connected ? `Conectada el ${fdate(st!.account!.connected_at)}. ${st!.logs[0] ? `Última sincronización: ${fdate(st!.logs[0].started_at)} (${st!.logs[0].status}).` : ""}` : "Se conecta con la autorización oficial de Mercado Libre. La app nunca pide tu usuario ni tu contraseña."}
+              {demo ? "Cuenta de demostración con datos de ejemplo: las ventas, publicaciones, preguntas y mensajes son ficticios." : connected ? `Conectada el ${fdate(st!.account!.connected_at)}. ${st!.logs[0] ? `Última sincronización: ${fdate(st!.logs[0].started_at)} (${st!.logs[0].status}).` : ""}` : "Se conecta con la autorización oficial de Mercado Libre. La app nunca pide tu usuario ni tu contraseña."}
             </p>
             {st?.account?.last_error && <p className="mt-1 text-xs text-danger">Último error: {st.account.last_error}</p>}
             {st && !st.configured && <p className="mt-1 text-sm text-warning">Faltan o no son válidas estas variables en el servidor: <strong>{st.missing.join(", ")}</strong>.</p>}
           </div>
           <div className="flex flex-wrap gap-2 max-md:w-full max-md:flex-col">
             {st?.configured && <div className="w-full sm:w-56"><a href="/api/integrations/mercadolibre/connect" className="inline-flex h-9 w-full items-center justify-center rounded-md bg-primary px-3.5 text-sm font-medium text-white hover:bg-primary-hover">{connected ? "Volver a autorizar" : "Conectar Mercado Libre"}</a></div>}
-            {connected && <div className="w-full sm:w-56"><ActionButton action={syncNow} label="Sincronizar ahora" variant="secondary" tall block /></div>}
-            {connected && <div className="w-full sm:w-56"><ActionButton action={reloadAll} label="Recargar todo el historial" variant="secondary" tall block /></div>}
+            {st && connected && <div className="w-full sm:w-56"><ActionButton action={syncNow} label="Sincronizar ahora" variant="secondary" tall block /></div>}
+            {st && connected && <div className="w-full sm:w-56"><ActionButton action={reloadAll} label="Recargar todo el historial" variant="secondary" tall block /></div>}
           </div>
         </div>
       </div>

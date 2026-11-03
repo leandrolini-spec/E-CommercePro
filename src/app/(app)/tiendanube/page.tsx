@@ -38,6 +38,8 @@ export default async function TiendaNubePage({ searchParams }: { searchParams: P
     return { projectId, tn, live, last };
   })();
   const [db, { tn, live, last }] = await Promise.all([getDb(), tnP]);
+  // Modo demostración (sin base real): la tienda figura conectada y sus datos son de ejemplo.
+  const demo = !!db.isDemo && !tnConfigured();
   const tab = TABS.find((t) => t[0] === param(sp, "tab"))?.[0] ?? "resumen";
   const q = param(sp, "q"), from = param(sp, "from"), to = param(sp, "to"), stateF = param(sp, "estado");
 
@@ -81,9 +83,11 @@ export default async function TiendaNubePage({ searchParams }: { searchParams: P
       <div className="rounded-lg border border-line bg-surface p-4">
         <div className="flex flex-wrap items-center justify-between gap-3 max-md:flex-col max-md:text-center">
           <div>
-            <p className="flex flex-wrap items-center gap-2 font-semibold max-md:justify-center">Conexión {tn ? <Badge tone="success">Conectada</Badge> : <Badge tone="warning">Sin conectar</Badge>}</p>
+            <p className="flex flex-wrap items-center gap-2 font-semibold max-md:justify-center">Conexión {demo ? <Badge tone="success">Conectada (demo)</Badge> : tn ? <Badge tone="success">Conectada</Badge> : <Badge tone="warning">Sin conectar</Badge>}</p>
             <p className="mt-1 text-sm text-muted">
-              {tn
+              {demo
+                ? "Tienda de demostración con datos de ejemplo: los pedidos, productos y clientes son ficticios."
+                : tn
                 ? `Tienda: ${tn.storeName ?? tn.storeId} · conectada el ${fdate(tn.connectedAt)}. ${last ? `Última sincronización: ${new Date(last.finished_at ?? last.started_at).toLocaleString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })} (${last.status}).` : "Todavía no se sincronizó: tocá “Sincronizar ahora”."} Los pedidos y productos nuevos entran solos.`
                 : tnConfigured()
                   ? "Tocá el botón, aceptá los permisos en Tienda Nube y volvés acá. Después los pedidos, productos, stock y clientes van a entrar solos, como pasa con Mercado Libre."
@@ -266,7 +270,7 @@ export default async function TiendaNubePage({ searchParams }: { searchParams: P
           ]}
         />
       )}
-      {tn ? (
+      {tn || demo ? (
         <Guide title="¿Qué se carga solo desde Tienda Nube?">Los pedidos pagados, clientes, envíos y productos entran solos apenas ocurren en la tienda (y una vez por día se revisa todo de nuevo). El precio, el stock y el estado de cada producto se pueden cambiar desde la solapa Publicaciones y se envían a la tienda. El neto de cada venta es una estimación (descuenta {TN_FEE_PCT}% de cargos de cobro), porque Tienda Nube no informa lo que cobra el medio de pago.</Guide>
       ) : (
         <Guide title="¿Cómo cargo todo mientras no esté conectada?">Ventas: Stock → Cargar ventas (canal Tienda Nube). Publicaciones: botón “Editar publicación” de cada producto.</Guide>

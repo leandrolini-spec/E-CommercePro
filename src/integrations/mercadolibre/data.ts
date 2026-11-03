@@ -34,6 +34,9 @@ export type MlQuestion = {
   hoursToAnswer: number | null;
 };
 
+/** Datos de Mercado Libre listos para mostrar (mismo formato para la integración real y para la demo). */
+export type MlData = Awaited<ReturnType<typeof loadMlData>>;
+
 /** Información de Mercado Libre ya guardada en la base, lista para mostrar. */
 /**
  * Datos de Mercado Libre listos para mostrar. `messages` elige cuánto traer de preguntas y conversaciones, que es lo más pesado:
