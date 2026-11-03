@@ -8,6 +8,9 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: "primary" | "secondary" | "danger" | "ghost";
 };
 export function Button({ variant = "primary", className, ...props }: ButtonProps) {
+  // El relleno por defecto solo va si quien usa el botón no define el suyo (los botones de solo ícono usan px-0 y quedan redondos).
+  const padX = /(^|\s)px-/.test(className ?? "") ? "" : "px-5";
+  const padY = /(^|\s)py-/.test(className ?? "") ? "" : "py-2";
   const styles = {
     primary: "bg-accent text-ink shadow-green hover:-translate-y-px hover:bg-[#3fd496] active:translate-y-0",
     secondary: "border border-line bg-surface text-ink shadow-soft hover:-translate-y-px hover:border-accent/50 hover:bg-mint",
@@ -18,7 +21,9 @@ export function Button({ variant = "primary", className, ...props }: ButtonProps
     <button
       {...props}
       className={cx(
-        "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 py-2 text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:hover:translate-y-0",
+        "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:hover:translate-y-0",
+        padX,
+        padY,
         styles,
         className,
       )}

@@ -61,7 +61,7 @@ export default async function PresupuestosPage({ searchParams }: PageProps<"/pre
               const off = `${sq} cursor-not-allowed border-line bg-bg text-muted/60`;
               const state = quoteStatus(x);
               return (
-                <div className="flex items-center justify-end gap-1">
+                <div className="flex items-center justify-end gap-1.5">
                   <InfoCardButton title={`Presupuesto ${num}`} label="Ver el detalle del presupuesto" medium>
                     <div className="space-y-3">
                       <div className="flex flex-wrap items-center gap-2"><Badge tone={TONE[state]}>{state}</Badge><span className="text-xs text-muted">{cust(x)} · {fdate(x.date)} · válido hasta {fdate(x.validUntil)}</span></div>
@@ -91,13 +91,9 @@ export default async function PresupuestosPage({ searchParams }: PageProps<"/pre
                     label="Editar" variant="secondary" iconOnly icon={<IconPencil />} products={productsList} customers={customersList} defaultTaxPct={db.settings.taxPct}
                     initial={{ id: x.id, customerId: x.customerId, customerName: cust(x) === "—" ? "" : cust(x), customerPhone: x.customerPhone ?? "", customerEmail: x.customerEmail ?? "", discountPct: x.discountPct, taxPct: x.taxPct, shipping: x.shipping ?? 0, notes: x.notes ?? "", validDays: Math.max(1, Math.round((new Date(x.validUntil).getTime() - new Date(x.date).getTime()) / 86400000)), items: x.items }}
                   />
-                  {x.status === "borrador" && <ActionButton action={setQuoteStatus.bind(null, x.id, "enviado")} label="Marcar como enviado" iconOnly small icon={<IconSend />} />}
-                  {state === "enviado" && (
-                    <>
-                      <ActionButton action={setQuoteStatus.bind(null, x.id, "aceptado")} label="Marcar como aceptado" iconOnly small icon={<IconCheck />} />
-                      <ActionButton action={setQuoteStatus.bind(null, x.id, "rechazado")} label="Marcar como rechazado" iconOnly small icon={<IconX />} />
-                    </>
-                  )}
+                  {x.status === "borrador" ? <ActionButton action={setQuoteStatus.bind(null, x.id, "enviado")} label="Marcar como enviado" iconOnly small icon={<IconSend />} /> : <span title="Ya está marcado como enviado" aria-label="Marcar como enviado: no disponible" className={off}><IconSend /></span>}
+                  {state === "enviado" ? <ActionButton action={setQuoteStatus.bind(null, x.id, "aceptado")} label="Marcar como aceptado" iconOnly small icon={<IconCheck />} /> : <span title="Solo se puede aceptar un presupuesto enviado" aria-label="Marcar como aceptado: no disponible" className={off}><IconCheck /></span>}
+                  {state === "enviado" ? <ActionButton action={setQuoteStatus.bind(null, x.id, "rechazado")} label="Marcar como rechazado" iconOnly small icon={<IconX />} /> : <span title="Solo se puede rechazar un presupuesto enviado" aria-label="Marcar como rechazado: no disponible" className={off}><IconX /></span>}
                   <ConfirmActionButton action={deleteQuote.bind(null, x.id)} label="Eliminar presupuesto" message={`¿Eliminar el presupuesto ${num}? Esta acción no se puede deshacer.`} icon medium />
                 </div>
               );

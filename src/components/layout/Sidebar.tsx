@@ -26,7 +26,7 @@ export function Sidebar({ modules, name, logoUrl, logoOnDark, soft }: { modules:
   }
 
   const nav = (
-    <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto overscroll-contain px-3 pb-4 pt-2">
+    <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto overscroll-contain px-3 pb-4 pt-4">
       {modules.map((m, i) => {
         const href = `/${m.slug}`;
         // Línea fina que separa las plataformas (con logo) del resto del menú.
@@ -65,7 +65,7 @@ export function Sidebar({ modules, name, logoUrl, logoOnDark, soft }: { modules:
       </div>
       {open && <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={() => setOpen(false)} aria-hidden />}
       <aside className={`${open ? "flex" : "hidden"} fixed inset-y-0 left-0 z-50 h-dvh w-72 max-w-[85vw] flex-col bg-[#0f1115] shadow-2xl md:sticky md:top-0 md:z-auto md:flex md:h-screen md:w-60 md:max-w-none md:shrink-0 md:shadow-none`}>
-        <div className="flex items-center justify-between px-3 pb-5 pt-4 md:block md:pb-8 md:pt-5">
+        <div className="flex items-center justify-between px-3 pb-5 pt-4 md:justify-center md:pb-5 md:pt-6">
           {logoUrl && logoOnDark ? (
             <img src={logoUrl} alt={name} className="max-h-12 w-auto max-w-32 object-contain" />
           ) : logoUrl ? (
@@ -77,6 +77,7 @@ export function Sidebar({ modules, name, logoUrl, logoOnDark, soft }: { modules:
           )}
           <button onClick={() => setOpen(false)} aria-label="Cerrar menú" style={{ color: soft }} className="flex h-9 w-9 items-center justify-center rounded-md text-xl hover:bg-white/10 md:hidden">✕</button>
         </div>
+        <div className="mx-3 h-px bg-white/10" aria-hidden />
         {nav}
         <div className="mx-3 h-px bg-white/10" aria-hidden />
         <div className="px-6 pb-1 pt-4 opacity-50 transition hover:opacity-100"><img src="/brand/carritix/carritix-logo-claro.svg" alt="Carritix" className="h-5 w-auto" /></div>
