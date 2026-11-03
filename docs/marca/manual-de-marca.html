@@ -1,0 +1,305 @@
+<title>Manual de marca Carrix</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+  /* Manual de marca de Carrix. Una sola mirada (tinta y verde), por eso los colores son fijos y no cambian con el tema. */
+  :root {
+    --ink: #0F1115; --green: #19C37D; --deep: #0B7A4B; --mint: #E6F8EF; --fog: #EEF1EC; --white: #FFFFFF;
+    --slate: #5C6470; --silver: #A3ABB6; --line: #DDE2DA;
+    --display: "Sora", "Helvetica Neue", Arial, sans-serif; --body: "Figtree", "Helvetica Neue", Arial, sans-serif;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--fog); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.55; }
+  img { display: block; max-width: 100%; }
+  h1, h2, h3, h4 { font-family: var(--display); font-weight: 600; margin: 0; letter-spacing: -0.02em; line-height: 1.08; text-wrap: balance; }
+  p { margin: 0; }
+  .band { padding-block: 72px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .in { max-width: 1040px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; }
+  .dark { background: var(--ink); color: var(--white); }
+  .white { background: var(--white); }
+  .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--deep); }
+  .dark .eyebrow { color: var(--green); }
+  h2 { font-size: clamp(1.9rem, 4.6vw, 3rem); }
+  h3 { font-size: 1.3rem; }
+  .lead { font-size: 1.1rem; max-width: 62ch; color: var(--slate); }
+  .dark .lead { color: var(--silver); }
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
+  .card { background: var(--white); border: 1px solid var(--line); border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .dark .card { background: #171A20; border-color: #262B33; }
+  .card p { color: var(--slate); font-size: 0.95rem; }
+  .dark .card p { color: var(--silver); }
+  .tile { border-radius: 16px; padding: 36px 24px; display: flex; align-items: center; justify-content: center; min-height: 170px; }
+  .cap { font-size: 13px; color: var(--slate); margin-top: 10px; }
+  .dark .cap { color: var(--silver); }
+  .sw { border-radius: 16px; padding: 20px; min-height: 190px; display: flex; flex-direction: column; justify-content: space-between; }
+  .sw b { font-family: var(--display); font-size: 1.15rem; font-weight: 600; }
+  .sw small { font-size: 12.5px; line-height: 1.5; opacity: .85; }
+  table { border-collapse: collapse; width: 100%; min-width: 520px; }
+  th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); font-size: 0.95rem; vertical-align: top; }
+  th { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--slate); }
+  .scroll { overflow-x: auto; background: var(--white); border: 1px solid var(--line); border-radius: 16px; }
+  .ok, .no { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+  .ok { color: var(--deep); } .no { color: #B42318; }
+  .big { font-family: var(--display); font-weight: 600; letter-spacing: -0.03em; line-height: 1; }
+  .pill { display: inline-block; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; background: var(--mint); color: var(--deep); }
+  .dark .pill { background: #12281F; color: var(--green); }
+</style>
+
+<!-- Portada -->
+<section class="band dark" style="padding-block:0;position:relative;overflow:hidden">
+  <img src="assets/portada.jpg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center right;opacity:.9">
+  <div class="in" style="position:relative;min-height:620px;justify-content:space-between;padding-block:48px">
+    <img src="assets/carrix-logo-claro.svg" alt="Carrix" style="height:44px;width:auto">
+    <div style="display:flex;flex-direction:column;gap:18px;max-width:560px">
+      <span class="eyebrow">Manual de marca · Versión 1.0</span>
+      <h1 class="big" style="font-size:clamp(2.6rem,7vw,4.8rem)">Escalá tus ventas con orden.</h1>
+      <p class="lead">Cómo se ve, cómo suena y cómo se usa Carrix.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 1. Esencia -->
+<section class="band">
+  <div class="in">
+    <div><span class="eyebrow">1 · Esencia</span></div>
+    <h2>Carrix ayuda a escalar ventas a través del orden.</h2>
+    <p class="lead">Quien vende por Mercado Libre y Tienda Nube no pierde ventas por falta de ganas: las pierde por desorden. Preguntas sin responder, stock que no coincide, envíos anotados a mano. Carrix pone todo en un solo lugar para que el negocio pueda crecer sin descontrolarse.</p>
+    <div class="grid">
+      <div class="card"><h3>Propósito</h3><p>Que cada vendedor tenga su negocio en orden para poder vender más.</p></div>
+      <div class="card"><h3>Promesa</h3><p>Todas tus ventas, tu stock y tus envíos en un solo carrito.</p></div>
+      <div class="card"><h3>Personalidad</h3><p>Clara, directa, cercana y confiable. Habla como un colega que sabe del tema, no como un software.</p></div>
+      <div class="card"><h3>El nombre</h3><p>Carrix une «carrito» con la «x» que multiplica y marca el punto de venta. Es corto, se pronuncia igual en todo el país y no ata la marca a una sola función.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. Logo -->
+<section class="band white">
+  <div class="in">
+    <div><span class="eyebrow">2 · Logo</span></div>
+    <h2>Un carrito simple, una palabra firme.</h2>
+    <p class="lead">El logo combina un isotipo (el carrito dentro de un cuadrado redondeado) con la palabra en minúsculas. La «x» final va siempre en verde. Las ruedas del carrito también.</p>
+    <div class="grid">
+      <div><div class="tile" style="background:var(--white);border:1px solid var(--line)"><img src="assets/carrix-logo.svg" alt="Logo principal sobre fondo claro" style="height:56px;width:auto"></div><p class="cap">Principal · fondos claros</p></div>
+      <div><div class="tile" style="background:var(--ink)"><img src="assets/carrix-logo-claro.svg" alt="Logo sobre fondo oscuro" style="height:56px;width:auto"></div><p class="cap">Sobre fondos oscuros (versión con isotipo verde)</p></div>
+      <div><div class="tile" style="background:var(--fog)"><img src="assets/carrix-isotipo.svg" alt="Isotipo" style="height:88px;width:88px"></div><p class="cap">Isotipo solo · ícono de app, redes y pestaña</p></div>
+      <div><div class="tile" style="background:var(--green)"><img src="assets/carrix-isotipo-blanco.svg" alt="Isotipo blanco sobre verde" style="height:88px;width:88px"></div><p class="cap">Isotipo blanco · sobre verde de marca o fotos oscuras</p></div>
+    </div>
+
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));align-items:start">
+      <div class="card">
+        <h3>Construcción</h3>
+        <svg viewBox="0 0 320 210" role="img" aria-label="Medidas del isotipo" style="width:100%;height:auto">
+          <g transform="translate(20 20) scale(2.5)">
+            <rect width="64" height="64" rx="15" fill="#0F1115"/>
+            <path d="M13 19h7l5 22h22l5-17H22" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="28" cy="49" r="3.6" fill="#19C37D"/><circle cx="44" cy="49" r="3.6" fill="#19C37D"/>
+          </g>
+          <g font-family="Figtree, sans-serif" font-size="11" fill="#0F1115">
+            <line x1="188" y1="37" x2="232" y2="37" stroke="#0B7A4B" stroke-width="1"/><text x="238" y="41">Esquina = 15 de 64</text>
+            <line x1="152" y1="79" x2="232" y2="79" stroke="#0B7A4B" stroke-width="1"/><text x="238" y="83">Trazo = 4,5</text>
+            <line x1="152" y1="141" x2="232" y2="141" stroke="#0B7A4B" stroke-width="1"/><text x="238" y="145">Rueda = radio 3,6</text>
+            <text x="20" y="195" fill="#5C6470">Isotipo sobre una grilla de 64 × 64</text>
+          </g>
+        </svg>
+      </div>
+      <div class="card">
+        <h3>Espacio libre</h3>
+        <div style="background:var(--mint);border-radius:12px;padding:16px;display:flex;justify-content:center">
+          <div style="outline:1.5px dashed var(--deep);outline-offset:-1px;padding:16px;background:var(--white)"><img src="assets/carrix-logo.svg" alt="" style="height:44px;width:auto"></div>
+        </div>
+        <p>Alrededor del logo queda libre un cuarto de la altura del isotipo, el mismo espacio que separa el isotipo de la palabra.</p>
+      </div>
+      <div class="card">
+        <h3>Tamaño mínimo</h3>
+        <div style="display:flex;align-items:flex-end;gap:32px;padding:10px 0">
+          <div><img src="assets/carrix-logo.svg" alt="" style="height:28px;width:auto"><p class="cap">Logo: 96 px de ancho</p></div>
+          <div><img src="assets/carrix-isotipo.svg" alt="" style="height:24px;width:24px"><p class="cap">Isotipo: 24 px</p></div>
+        </div>
+        <p>Por debajo de esos tamaños, usá solo el isotipo en lugar del logo completo.</p>
+      </div>
+    </div>
+
+    <h3>Usos incorrectos</h3>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr))">
+      <div><div class="tile" style="background:var(--fog);min-height:130px"><img src="assets/carrix-logo.svg" alt="" style="height:36px;width:auto;transform:scaleX(1.5)"></div><p class="cap"><span class="no">No</span> · deformarlo</p></div>
+      <div><div class="tile" style="background:var(--fog);min-height:130px"><img src="assets/carrix-logo.svg" alt="" style="height:36px;width:auto;transform:rotate(-12deg)"></div><p class="cap"><span class="no">No</span> · rotarlo</p></div>
+      <div><div class="tile" style="background:var(--fog);min-height:130px"><img src="assets/carrix-logo.svg" alt="" style="height:36px;width:auto;filter:hue-rotate(160deg) saturate(2)"></div><p class="cap"><span class="no">No</span> · cambiar los colores</p></div>
+      <div><div class="tile" style="background:var(--fog);min-height:130px"><img src="assets/carrix-logo.svg" alt="" style="height:36px;width:auto;filter:drop-shadow(4px 5px 3px rgba(0,0,0,.55))"></div><p class="cap"><span class="no">No</span> · agregarle sombras</p></div>
+      <div><div class="tile" style="background:#7FE3B6;min-height:130px"><img src="assets/carrix-logo.svg" alt="" style="height:36px;width:auto"></div><p class="cap"><span class="no">No</span> · ponerlo sobre un fondo con poco contraste</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. Color -->
+<section class="band">
+  <div class="in">
+    <div><span class="eyebrow">3 · Color</span></div>
+    <h2>Tinta, verde y mucho aire.</h2>
+    <p class="lead">Dos colores hacen el trabajo. La tinta da seriedad y orden; el verde marca lo que importa: la venta, el avance, la acción. El resto es blanco y neutros suaves.</p>
+    <div class="grid">
+      <div class="sw" style="background:var(--ink);color:#fff"><b>Tinta</b><small>#0F1115<br>RGB 15 · 17 · 21<br>Textos, fondos oscuros, isotipo</small></div>
+      <div class="sw" style="background:var(--green);color:var(--ink)"><b>Verde Carrix</b><small>#19C37D<br>RGB 25 · 195 · 125<br>Acento, botones, la «x», las ruedas</small></div>
+      <div class="sw" style="background:var(--deep);color:#fff"><b>Verde profundo</b><small>#0B7A4B<br>RGB 11 · 122 · 75<br>Texto y enlaces verdes sobre fondo claro</small></div>
+      <div class="sw" style="background:var(--mint);color:var(--ink)"><b>Menta</b><small>#E6F8EF<br>RGB 230 · 248 · 239<br>Fondos suaves, etiquetas</small></div>
+      <div class="sw" style="background:var(--fog);color:var(--ink);border:1px solid var(--line)"><b>Niebla</b><small>#EEF1EC<br>RGB 238 · 241 · 236<br>Fondo general de documentos</small></div>
+      <div class="sw" style="background:var(--white);color:var(--ink);border:1px solid var(--line)"><b>Blanco</b><small>#FFFFFF<br>Tarjetas y superficies</small></div>
+    </div>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));align-items:start">
+      <div class="card">
+        <h3>Proporción de uso</h3>
+        <div style="display:flex;height:44px;border-radius:12px;overflow:hidden;border:1px solid var(--line)"><div style="flex:60;background:var(--white)"></div><div style="flex:25;background:var(--ink)"></div><div style="flex:10;background:var(--fog)"></div><div style="flex:5;background:var(--green)"></div></div>
+        <p>Blanco 60 %, tinta 25 %, niebla 10 %, verde 5 %. El verde es poco y por eso se nota.</p>
+      </div>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Combinación</th><th>Contraste</th><th>Uso</th></tr></thead>
+          <tbody>
+            <tr><td>Tinta sobre blanco</td><td>18,9 : 1</td><td><span class="ok">Texto</span></td></tr>
+            <tr><td>Verde sobre tinta</td><td>8,2 : 1</td><td><span class="ok">Texto y gráficos</span></td></tr>
+            <tr><td>Tinta sobre verde</td><td>8,2 : 1</td><td><span class="ok">Botones</span></td></tr>
+            <tr><td>Verde profundo sobre blanco</td><td>5,4 : 1</td><td><span class="ok">Texto verde</span></td></tr>
+            <tr><td>Verde sobre blanco</td><td>2,3 : 1</td><td><span class="no">Solo gráficos grandes</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <p class="lead">Los colores de estado del sistema (éxito, aviso, error) son aparte y solo se usan para comunicar estados, nunca como decoración de marca.</p>
+  </div>
+</section>
+
+<!-- 4. Tipografía -->
+<section class="band dark">
+  <div class="in">
+    <div><span class="eyebrow">4 · Tipografía</span></div>
+    <h2>Dos tipografías, gratis y fáciles de conseguir.</h2>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr))">
+      <div class="card"><span class="pill">Titulares y logo</span><p class="big" style="font-size:5rem;color:#fff">Sora</p><p style="font-family:var(--display);font-weight:600;font-size:1.3rem;color:#fff">Ordená tus ventas y vendé más.</p><p>Sora semibold, en minúsculas o con mayúscula solo al inicio de la frase. Tracking apenas cerrado en titulares grandes.</p></div>
+      <div class="card"><span class="pill">Textos y pantallas</span><p style="font-family:var(--body);font-weight:600;font-size:5rem;line-height:1;color:#fff">Figtree</p><p style="font-family:var(--body);font-size:1.15rem;color:#fff">Las preguntas, los pedidos y los envíos de hoy, en un solo lugar y sin llamadas.</p><p>Figtree regular 400, medium 500 y semibold 600. Es la letra de lectura de documentos, propuestas y mensajes.</p></div>
+    </div>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))">
+      <div class="card"><p>Display</p><p style="font-family:var(--display);font-weight:600;font-size:3rem;line-height:1.05;color:#fff;letter-spacing:-.03em">Aa</p><p>Sora 600 · 56/60</p></div>
+      <div class="card"><p>Título 1</p><p style="font-family:var(--display);font-weight:600;font-size:2.2rem;line-height:1.1;color:#fff">Aa</p><p>Sora 600 · 40/44</p></div>
+      <div class="card"><p>Título 2</p><p style="font-family:var(--display);font-weight:600;font-size:1.6rem;line-height:1.15;color:#fff">Aa</p><p>Sora 600 · 28/32</p></div>
+      <div class="card"><p>Cuerpo</p><p style="font-family:var(--body);font-size:1.05rem;color:#fff">Aa</p><p>Figtree 400 · 16/25</p></div>
+    </div>
+    <p class="lead">Reglas: oraciones en minúscula (no TODO EN MAYÚSCULAS salvo etiquetas cortas con espaciado), un solo peso de logo, y nunca más de dos tipografías en una misma pieza.</p>
+  </div>
+</section>
+
+<!-- 5. Formas -->
+<section class="band">
+  <div class="in">
+    <div><span class="eyebrow">5 · Formas e íconos</span></div>
+    <h2>Redondeado, de línea gruesa y sin adornos.</h2>
+    <div class="grid">
+      <div class="card"><div style="display:flex;gap:12px;align-items:center"><div style="width:56px;height:56px;border-radius:15px;background:var(--ink)"></div><div style="width:56px;height:56px;border-radius:12px;background:var(--mint);border:1px solid var(--line)"></div><div style="height:40px;padding:0 18px;border-radius:10px;background:var(--green);color:var(--ink);font-weight:600;display:flex;align-items:center">Botón</div></div><h3>Esquinas</h3><p>Isotipo 23 % de radio. Tarjetas 12 a 16 px. Botones 10 px. Nada con ángulos duros ni totalmente circular, salvo las ruedas.</p></div>
+      <div class="card"><svg viewBox="0 0 160 60" style="width:100%;height:60px" role="img" aria-label="Iconos de línea"><g fill="none" stroke="#0F1115" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14h6l4 20h20l4-14H18"/><circle cx="23" cy="42" r="2.5"/><circle cx="37" cy="42" r="2.5"/><rect x="70" y="14" width="26" height="24" rx="4"/><path d="M70 22h26M78 14v-4"/><path d="M122 38V18l10-8 10 8v20z"/><path d="M128 38V28h8v10"/></g></svg><h3>Íconos</h3><p>De línea, trazo uniforme y puntas redondeadas, como el carrito. Solo en tinta o en blanco; el verde se reserva para un punto de acento.</p></div>
+      <div class="card"><div style="display:flex;gap:10px;align-items:center;height:56px"><span style="width:14px;height:14px;border-radius:50%;background:var(--green)"></span><span style="width:14px;height:14px;border-radius:50%;background:var(--ink)"></span><span style="width:14px;height:14px;border-radius:50%;background:var(--silver)"></span></div><h3>Las ruedas</h3><p>El círculo verde es el elemento firma. Puede aparecer como viñeta, indicador de estado o separador.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. Imagen -->
+<section class="band white">
+  <div class="in">
+    <div><span class="eyebrow">6 · Imagen</span></div>
+    <h2>Objetos blancos, fondo negro, acento verde.</h2>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));align-items:center">
+      <img src="assets/portada.jpg" alt="Carrito 3D blanco sobre fondo negro con detalles verdes" style="border-radius:16px;width:100%;height:auto">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <h3>Estilo de ilustración</h3>
+        <p class="lead" style="color:var(--slate)">Objetos de compra (carrito, bolsa, etiqueta, regalo) en 3D mate blanco, con detalles verdes y brillo suave, sobre fondo tinta. Se usa para portadas, ingreso al sistema y piezas de presentación.</p>
+        <p class="lead" style="color:var(--slate)">Las fotos de producto de cada cliente se muestran tal como son, sin filtros ni recoloreados.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. Voz -->
+<section class="band">
+  <div class="in">
+    <div><span class="eyebrow">7 · Voz y tono</span></div>
+    <h2>Hablamos claro, como entre colegas.</h2>
+    <div class="grid">
+      <div class="card"><h3>Claro</h3><p>Una idea por frase. Los números y las acciones, primero. Nada de jerga técnica.</p></div>
+      <div class="card"><h3>Cercano</h3><p>Voseo argentino: «tenés», «mirá», «vendé». Sin ser informal de más.</p></div>
+      <div class="card"><h3>Ordenado</h3><p>Mostramos qué pasó, qué falta y qué sigue. Nunca dejamos al cliente adivinando.</p></div>
+      <div class="card"><h3>Honesto</h3><p>No prometemos lo que no podemos medir. Cero cifras inventadas.</p></div>
+    </div>
+    <div class="scroll"><table>
+      <thead><tr><th>Decimos</th><th>No decimos</th></tr></thead>
+      <tbody>
+        <tr><td><span class="ok">Sí</span> · «Tenés 3 preguntas sin responder.»</td><td><span class="no">No</span> · «Se detectaron consultas pendientes de gestión.»</td></tr>
+        <tr><td><span class="ok">Sí</span> · «Tu stock quedó bajo en 2 productos.»</td><td><span class="no">No</span> · «Alerta de nivel crítico de inventario.»</td></tr>
+        <tr><td><span class="ok">Sí</span> · «Ordená tu negocio y vendé más.»</td><td><span class="no">No</span> · «Revolucionamos el e-commerce con IA disruptiva.»</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- 8. Aplicaciones -->
+<section class="band dark">
+  <div class="in">
+    <div><span class="eyebrow">8 · Aplicaciones</span></div>
+    <h2>Cómo se ve en uso.</h2>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));align-items:start">
+      <div>
+        <div style="position:relative;border-radius:16px;overflow:hidden;background:#000;min-height:260px">
+          <img src="assets/portada.jpg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+          <img src="assets/carrix-logo-claro.svg" alt="Carrix" style="position:absolute;left:18px;top:16px;height:26px;width:auto">
+          <div style="position:absolute;right:14px;top:50%;transform:translateY(-50%);width:44%;background:rgba(15,17,21,.88);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:7px">
+            <b style="font-family:var(--display);font-size:13px;font-weight:600">Ingresá a Carrix</b>
+            <span style="height:22px;border-radius:6px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16)"></span>
+            <span style="height:22px;border-radius:6px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16)"></span>
+            <span style="height:24px;border-radius:7px;background:var(--green);color:var(--ink);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center">Ingresar</span>
+          </div>
+        </div>
+        <p class="cap">Pantalla de ingreso</p>
+      </div>
+      <div>
+        <div style="border-radius:16px;overflow:hidden;background:#000;display:flex;min-height:260px">
+          <div style="width:34%;background:var(--ink);padding:16px 12px;display:flex;flex-direction:column;gap:10px;border-right:1px solid #262B33">
+            <img src="assets/carrix-logo-claro.svg" alt="" style="height:20px;width:auto;align-self:flex-start">
+            <span style="height:22px;border-radius:6px;background:rgba(25,195,125,.18)"></span>
+            <span style="height:12px;border-radius:5px;background:rgba(255,255,255,.1)"></span><span style="height:12px;border-radius:5px;background:rgba(255,255,255,.1);width:70%"></span><span style="height:12px;border-radius:5px;background:rgba(255,255,255,.1);width:85%"></span>
+          </div>
+          <div style="flex:1;background:var(--fog);padding:16px;display:flex;flex-direction:column;gap:10px">
+            <b style="color:var(--ink);font-family:var(--display);font-size:13px">Dashboard</b>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><span style="height:46px;border-radius:9px;background:#fff;border:1px solid var(--line)"></span><span style="height:46px;border-radius:9px;background:#fff;border:1px solid var(--line)"></span><span style="height:46px;border-radius:9px;background:#fff;border:1px solid var(--line)"></span><span style="height:46px;border-radius:9px;background:var(--ink)"></span></div>
+          </div>
+        </div>
+        <p class="cap">Sistema: menú oscuro, contenido en niebla, un solo acento verde</p>
+      </div>
+    </div>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));align-items:end">
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:10px"><img src="assets/carrix-app-512.png" alt="" style="width:96px;height:96px;border-radius:22px"><p class="cap">Ícono de app y perfil de redes</p></div>
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:10px"><div style="display:flex;align-items:center;gap:8px;background:#1d2129;border-radius:10px 10px 0 0;padding:8px 12px"><img src="assets/carrix-isotipo.svg" alt="" style="width:16px;height:16px"><span style="font-size:12px;color:#fff">Carrix</span></div><p class="cap">Pestaña del navegador</p></div>
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:10px"><div style="background:#fff;border-radius:10px;padding:14px;width:100%;color:var(--ink);font-size:12.5px;line-height:1.4"><img src="assets/carrix-logo.svg" alt="" style="height:22px;width:auto;margin-bottom:8px"><b>Tu nombre</b><br>Carrix · ventas ordenadas</div><p class="cap">Firma de mail</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 9. Archivos -->
+<section class="band">
+  <div class="in">
+    <div><span class="eyebrow">9 · Archivos</span></div>
+    <h2>Todo lo que necesitás, listo para usar.</h2>
+    <div class="scroll"><table>
+      <thead><tr><th>Archivo</th><th>Cuándo usarlo</th></tr></thead>
+      <tbody>
+        <tr><td>carrix-logo.svg / .png</td><td>Logo principal, fondos claros</td></tr>
+        <tr><td>carrix-logo-claro.svg</td><td>Logo sobre fondos oscuros (ingreso, menú, portadas)</td></tr>
+        <tr><td>carrix-isotipo.svg / .png</td><td>Ícono de app, avatar de redes, pestaña</td></tr>
+        <tr><td>carrix-isotipo-verde.svg</td><td>Piezas sobre fondo oscuro donde el isotipo debe resaltar</td></tr>
+        <tr><td>carrix-isotipo-blanco.svg</td><td>Sobre verde de marca o fotos oscuras</td></tr>
+        <tr><td>carrix-palabra.svg / carrix-palabra-claro.svg</td><td>Solo la palabra, cuando el espacio es muy horizontal</td></tr>
+        <tr><td>carrix-app-512.png · apple-touch-icon.png · carrix-favicon-64.png</td><td>Íconos de aplicación y navegador</td></tr>
+      </tbody>
+    </table></div>
+    <p class="cap">Los trazados de la palabra están convertidos a curvas (no hace falta instalar Sora). Ubicación en el proyecto: <b>public/brand/carrix/</b></p>
+  </div>
+</section>

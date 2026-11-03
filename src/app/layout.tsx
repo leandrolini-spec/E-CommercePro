@@ -5,8 +5,8 @@ import "./globals.css";
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Gestión comercial",
-  description: "Gestión comercial",
+  title: "Carrix",
+  description: "Ventas, stock y envíos para vendedores de Mercado Libre y Tienda Nube",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

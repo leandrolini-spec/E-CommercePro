@@ -13,8 +13,8 @@ const SECRET_PREFIXES = ["/api/cron", "/api/integrations", "/api/tiendanube/webh
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   if (isAuthBypassed()) {
-    // En modo demostración no hay ingreso: si alguien abre /login, va directo a la app.
-    if (isDemoMode() && pathname === "/login") return NextResponse.redirect(new URL("/", request.url));
+    // En modo demostración no hay ingreso: si alguien abre /login, va directo a la app. Con /login?vista se muestra la pantalla (para presentar) y "Ingresar" entra a la demo.
+    if (isDemoMode() && pathname === "/login" && !request.nextUrl.searchParams.has("vista")) return NextResponse.redirect(new URL("/", request.url));
     return NextResponse.next();
   }
   if ([...PUBLIC_PREFIXES, ...SECRET_PREFIXES, ...DEV_ONLY_PREFIXES].some((p) => pathname.startsWith(p))) {
