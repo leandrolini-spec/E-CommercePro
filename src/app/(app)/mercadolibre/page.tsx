@@ -12,7 +12,7 @@ import { Alert, Badge, EmptyState, KpiCard } from "@/components/ui/primitives";
 import { fdate, int, isoDaysAgo, money, pct, today } from "@/lib/format";
 import { answerQuestion, reloadAll, replyToBuyer, syncNow } from "@/integrations/mercadolibre/actions";
 import { saveCustomerData } from "@/modules/actions";
-import { ITEM_STATUS, mlData, Q_STATUS, REPUTATION } from "@/integrations/mercadolibre/data";
+import { ITEM_STATUS, mlData, mlOrderTimes, Q_STATUS, REPUTATION } from "@/integrations/mercadolibre/data";
 import { mlStatus } from "@/integrations/mercadolibre/status";
 import { demoMlData } from "@/modules/demo/mercadolibre";
 import { byProduct, kpis, PERIODS, periodRange, saleTotals, type Period } from "@/modules/calc";
@@ -146,7 +146,140 @@ const Panel = ({ title, children, className = "" }: { title: string; children: R
   <div className={`rounded-lg border border-line bg-surface p-4 ${className}`}><h3 className="mb-3 text-sm font-semibold">{title}</h3>{children}</div>
 );
 
-function SalesTab({ sp, db, full }: { sp: SearchParams; db: Db; full: boolean }) {
+const addDays = (iso: string, n: number) => new Date(Date.parse(`${iso}T00:00:00Z`) + n * 86400000).toISOString().slice(0, 10);
+const daysBetween = (from: string, to: string) => Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86400000) + 1;
+
+/** Variación contra el período anterior, con flecha: verde si sube, rojo si baja. */
+function Delta({ now, before }: { now: number; before: number }) {
+  if (!before) return <span className="text-xs text-muted">—</span>;
+  const d = ((now - before) / before) * 100;
+  if (Math.abs(d) < 0.05) return <span className="text-xs text-muted">0,0 %</span>;
+  return <span className={`text-xs font-medium ${d > 0 ? "text-[#16a34a]" : "text-[#dc2626]"}`}>{d > 0 ? "▲" : "▼"} {Math.abs(d).toFixed(1).replace(".", ",")} %</span>;
+}
+
+function Stat({ label, value, dot, now, before }: { label: string; value: string; dot?: string; now: number; before: number }) {
+  return (
+    <div>
+      <p className="flex items-center gap-1.5 text-sm text-muted">{dot && <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: dot }} />}{label}</p>
+      <p className="mt-1 flex items-baseline gap-2"><span className="text-2xl font-bold">{value}</span><Delta now={now} before={before} /></p>
+    </div>
+  );
+}
+
+/**
+ * Detalle de compradores del período. Nuevo: su primera compra en Mercado Libre cae dentro del período.
+ * Frecuente: ya había comprado antes de que empiece el período. Tasa de recompra: frecuentes sobre el total.
+ * El cambio (flecha) compara con el período anterior de la misma duración.
+ */
+function BuyersPanel({ db, from, to }: { db: Db; from: string; to: string }) {
+  const first = new Map<string, string>();
+  for (const s of db.sales) if (s.status !== "cancelada" && s.customerId && (!first.has(s.customerId) || s.date < first.get(s.customerId)!)) first.set(s.customerId, s.date);
+  const stats = (f: string, t: string) => {
+    const ids = new Set(db.sales.filter((s) => s.status !== "cancelada" && s.customerId && s.date >= f && s.date <= t).map((s) => s.customerId!));
+    const frequent = [...ids].filter((id) => first.get(id)! < f).length;
+    return { total: ids.size, frequent, fresh: ids.size - frequent, rate: ids.size ? (frequent / ids.size) * 100 : 0 };
+  };
+  const n = daysBetween(from, to);
+  const cur = stats(from, to), prev = stats(addDays(from, -n), addDays(from, -1));
+  const circ = 2 * Math.PI * 40, share = cur.total ? cur.frequent / cur.total : 0;
+  return (
+    <Panel title="Detalle de compradores">
+      <div className="flex flex-wrap items-center gap-x-10 gap-y-4">
+        <svg viewBox="0 0 100 100" className="h-24 w-24 -rotate-90" role="img" aria-label={`${cur.frequent} frecuentes y ${cur.fresh} nuevos`}>
+          <circle cx="50" cy="50" r="40" fill="none" stroke={ML_BLUE} strokeWidth="18" opacity={cur.total ? 1 : 0.15} />
+          {cur.total > 0 && share > 0 && <circle cx="50" cy="50" r="40" fill="none" stroke="#2dd4bf" strokeWidth="18" strokeDasharray={`${share * circ} ${circ}`} />}
+        </svg>
+        <Stat label="Total" value={int(cur.total)} now={cur.total} before={prev.total} />
+        <Stat label="Frecuentes" value={int(cur.frequent)} dot="#2dd4bf" now={cur.frequent} before={prev.frequent} />
+        <Stat label="Nuevos" value={int(cur.fresh)} dot={ML_BLUE} now={cur.fresh} before={prev.fresh} />
+        <Stat label="Tasa de recompra" value={`${Math.round(cur.rate)} %`} now={cur.rate} before={prev.rate} />
+      </div>
+      <Guide className="mt-4" title="¿Cómo se calcula?">Total: compradores distintos del período. Nuevos: su primera compra en tu cuenta cae dentro del período. Frecuentes: ya habían comprado antes. La tasa de recompra es frecuentes sobre el total, y la flecha compara con el período anterior de igual duración.</Guide>
+    </Panel>
+  );
+}
+
+const WEEKDAYS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+
+/** Concentración de ventas por día de la semana y hora (hora de Argentina). */
+function HeatmapPanel({ sales, times, from, to }: { sales: Db["sales"]; times: Map<string, string>; from: string; to: string }) {
+  const grid = Array.from({ length: 7 }, () => Array<number>(24).fill(0));
+  let total = 0;
+  for (const s of sales) {
+    const t = times.get(s.mlOrderId ?? s.id);
+    const ms = t ? Date.parse(t) : NaN;
+    if (Number.isNaN(ms)) continue;
+    // Mercado Libre informa la hora con su zona (-04:00): se pasa al instante real y de ahí a hora argentina (UTC-3, sin horario de verano).
+    const ar = new Date(ms - 3 * 3600000);
+    grid[ar.getUTCDay()][ar.getUTCHours()]++;
+    total++;
+  }
+  const dayTotals = grid.map((r) => r.reduce((a, b) => a + b, 0));
+  const hourTotals = Array.from({ length: 24 }, (_, h) => grid.reduce((a, r) => a + r[h], 0));
+  const max = Math.max(0, ...grid.flat());
+  const bestDay = dayTotals.indexOf(Math.max(...dayTotals));
+  // Franja de 6 horas seguidas con más ventas.
+  let bestStart = 0, bestSum = -1;
+  for (let h = 0; h < 24; h++) { let sum = 0; for (let i = 0; i < 6; i++) sum += hourTotals[(h + i) % 24]; if (sum > bestSum) { bestSum = sum; bestStart = h; } }
+  const hh = (h: number) => `${String(h % 24).padStart(2, "0")}:00`;
+  const level = (v: number) => (v === 0 ? 0 : max <= 1 || v / max <= 0.34 ? 1 : v / max <= 0.67 ? 2 : 3);
+  const LEVELS = [{ label: "Sin ventas", color: "#e5e7eb", size: 6 }, { label: "Baja", color: "#bfd7fd", size: 16 }, { label: "Media", color: "#6ea3fb", size: 16 }, { label: "Alta", color: ML_BLUE, size: 20 }];
+  return (
+    <Panel title="Concentración de ventas por día y hora">
+      {total === 0 ? <p className="text-sm text-muted">Sin ventas en el período.</p> : (
+        <>
+          <div className="mb-4 grid grid-cols-2 gap-x-6 gap-y-3 text-sm lg:grid-cols-4">
+            <div><p className="text-muted">Ventas del período</p><p className="text-2xl font-bold">{int(total)}</p></div>
+            <div><p className="text-muted">Promedio de ventas por día</p><p className="text-2xl font-bold">{(total / Math.max(1, daysBetween(from, to))).toFixed(1).replace(".", ",")}</p></div>
+            <div><p className="text-muted">Día con más ventas</p><p className="text-2xl font-bold">{WEEKDAYS[bestDay]}</p></div>
+            <div><p className="text-muted">Franja horaria con más ventas</p><p className="text-2xl font-bold">De {hh(bestStart)} a {hh(bestStart + 6)}</p></div>
+          </div>
+          <div className="overflow-x-auto">
+            <div className="min-w-[640px]">
+              {grid.map((row, d) => (
+                <div key={d} className="flex items-center">
+                  <span className="w-20 shrink-0 text-xs text-muted">{WEEKDAYS[d]}</span>
+                  <div className="grid flex-1" style={{ gridTemplateColumns: "repeat(24, minmax(0, 1fr))" }}>
+                    {row.map((v, h) => { const l = LEVELS[level(v)]; return (
+                      <span key={h} title={`${WEEKDAYS[d]} ${hh(h)}: ${v} venta${v === 1 ? "" : "s"}`} className="flex h-7 items-center justify-center">
+                        <span className="rounded-full" style={{ width: l.size, height: l.size, background: l.color }} />
+                      </span>
+                    ); })}
+                  </div>
+                  <span className="w-8 shrink-0 text-right text-xs font-semibold">{dayTotals[d] || "—"}</span>
+                </div>
+              ))}
+              <div className="flex">
+                <span className="w-20 shrink-0" />
+                <div className="grid flex-1" style={{ gridTemplateColumns: "repeat(24, minmax(0, 1fr))" }}>
+                  {Array.from({ length: 24 }, (_, h) => <span key={h} className="text-center text-[10px] text-muted">{String(h).padStart(2, "0")}</span>)}
+                </div>
+                <span className="w-8 shrink-0" />
+              </div>
+            </div>
+          </div>
+          <div className="mt-3 flex flex-wrap justify-center gap-4 text-xs text-muted">
+            {LEVELS.map((l) => <span key={l.label} className="inline-flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: l.color }} />{l.label}</span>)}
+          </div>
+          <p className="mt-2 text-center text-xs text-muted">Cada punto es la cantidad de ventas de ese día de la semana y esa hora, sumadas en todo el período elegido.</p>
+        </>
+      )}
+    </Panel>
+  );
+}
+
+/** Hora de ejemplo (estable) para las ventas de la demostración: más movimiento al mediodía y a la tarde. */
+function demoOrderTimes(sales: Db["sales"]) {
+  const HOURS = [9, 10, 11, 11, 12, 12, 13, 14, 15, 15, 16, 17, 18, 19, 20, 21];
+  const out = new Map<string, string>();
+  for (const s of sales) {
+    let h = 0; for (const ch of s.id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    out.set(s.mlOrderId ?? s.id, `${s.date}T${String(HOURS[h % HOURS.length]).padStart(2, "0")}:${String((h >> 5) % 60).padStart(2, "0")}:00.000-03:00`);
+  }
+  return out;
+}
+
+async function SalesTab({ sp, db, full }: { sp: SearchParams; db: Db; full: boolean }) {
   const p = param(sp, "p") || "hoy";
   const { from, to } = range(p);
   const k = kpis(db, from, to);
@@ -162,7 +295,8 @@ function SalesTab({ sp, db, full }: { sp: SearchParams; db: Db; full: boolean })
   const products = byProduct(db, from, to);
   const topUnits = [...products].sort((a, b) => b.units - a.units).slice(0, 8);
   const topRevenue = [...products].sort((a, b) => b.revenue - a.revenue).slice(0, 8);
-
+  // Con cuenta real, la hora sale de cada orden de Mercado Libre; en la demostración se arma una hora de ejemplo estable a partir del id de la venta.
+  const times = isSupabase() ? await mlOrderTimes(await activeProjectId()) : demoOrderTimes(counted);
 
   return (
     <div className="space-y-4">
@@ -177,19 +311,30 @@ function SalesTab({ sp, db, full }: { sp: SearchParams; db: Db; full: boolean })
         <KpiCard label="Ingresos netos" value={money(k.net)} hint="Total menos comisión de venta" />
       </section>
 
+      <BuyersPanel db={db} from={from} to={to} />
+      <HeatmapPanel sales={counted} times={times} from={from} to={to} />
+
       <section className="grid gap-4 lg:grid-cols-2">
         <Panel title="Productos más vendidos (unidades)"><Bars rows={topUnits.map((x) => ({ label: x.name, value: x.units }))} /></Panel>
         <Panel title="Productos que más facturan"><Bars rows={topRevenue.map((x) => ({ label: x.name, value: Math.round(x.revenue) }))} fmt={money} /></Panel>
       </section>
       {full && (
-        <DataTable
-          rows={[...counted].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 30)} rowKey={(s) => s.id}
-          columns={[
-            { key: "d", header: "Fecha", render: (s) => fdate(s.date) }, { key: "o", header: "Orden", render: (s) => <span className="font-mono text-xs">{s.mlOrderId ?? "—"}</span> },
-            { key: "b", header: "Bruto", align: "right", render: (s) => money(saleTotals(db, s).revenue) }, { key: "c", header: "Cargos", align: "right", render: (s) => money(saleTotals(db, s).fees) },
-            { key: "n", header: "Neto", align: "right", render: (s) => money(saleTotals(db, s).net) },
-          ]}
-        />
+        <details className="group rounded-lg border border-line bg-surface">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold [&::-webkit-details-marker]:hidden">
+            <span>Últimas ventas <span className="font-normal text-muted">· {Math.min(counted.length, 30)} de {int(counted.length)}</span></span>
+            <svg aria-hidden viewBox="0 0 20 20" className="h-4 w-4 shrink-0 text-muted transition-transform group-open:rotate-180" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m5 8 5 5 5-5" /></svg>
+          </summary>
+          <div className="border-t border-line p-3">
+            <DataTable
+              rows={[...counted].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 30)} rowKey={(s) => s.id}
+              columns={[
+                { key: "d", header: "Fecha", render: (s) => fdate(s.date) }, { key: "o", header: "Orden", render: (s) => <span className="font-mono text-xs">{s.mlOrderId ?? "—"}</span> },
+                { key: "b", header: "Bruto", align: "right", render: (s) => money(saleTotals(db, s).revenue) }, { key: "c", header: "Cargos", align: "right", render: (s) => money(saleTotals(db, s).fees) },
+                { key: "n", header: "Neto", align: "right", render: (s) => money(saleTotals(db, s).net) },
+              ]}
+            />
+          </div>
+        </details>
       )}
 
       <section className="grid gap-4 lg:grid-cols-2">

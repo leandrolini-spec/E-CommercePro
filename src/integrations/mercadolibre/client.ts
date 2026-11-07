@@ -49,7 +49,8 @@ export async function mlPost<T = unknown>(projectId: string, path: string, body:
     if (res.status === 401 && !force) { force = true; continue; }
     const data = await res.json().catch(() => ({}));
     if (res.ok) return data as T;
-    throw new MlError(data.message || data.error || `HTTP ${res.status}`, res.status, path);
+    const causes = Array.isArray(data.cause) ? data.cause.map((c: { message?: string }) => c?.message).filter(Boolean).join(" · ") : "";
+    throw new MlError([data.message || data.error || `HTTP ${res.status}`, causes].filter(Boolean).join(": "), res.status, path);
   }
   throw new MlError("No autorizado", 401, path);
 }

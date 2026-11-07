@@ -6,7 +6,7 @@ import { hasValidSession } from "@/core/session";
 import { MAX_MSG, MAX_MSGS, splitMessages } from "@/modules/quick-replies";
 import { demoAnswer, demoReply } from "@/modules/demo/mercadolibre";
 import { activeProjectId, isSupabase, service } from "@/modules/repo/supabase";
-import { MlError, mlPost } from "./client";
+import { MlError, mlGet, mlPost } from "./client";
 import { conversationIdOf } from "./data";
 import { autoWelcome, sendWelcomeMessages, closeDelivered, settleRefunds, syncClaims, refreshRecentConversations, backfill, drain, processJob, queueMissingShipments } from "./sync";
 
@@ -85,7 +85,7 @@ export async function reloadAll() {
 const NEEDS_PERMISSION = "Mercado Libre no dejó enviar: falta el permiso de escritura. Cambialo en el panel de desarrolladores y tocá “Volver a autorizar” en Mercado Libre → Resumen.";
 function friendly(e: unknown): Error {
   // Un 401/403 en una sola compra no siempre es falta de permiso de la app: se muestra el detalle real que informa Mercado Libre.
-  if (e instanceof MlError && [401, 403].includes(e.status)) return new Error(`${e.status === 401 ? NEEDS_PERMISSION : "No lo permitió para esta compra."} Detalle: ${e.message}`);
+  if (e instanceof MlError && [401, 403].includes(e.status)) return new Error(`${e.status === 401 ? NEEDS_PERMISSION : "Mercado Libre no lo permitió."} Detalle: ${e.message}`);
   return new Error(e instanceof Error ? e.message : "No se pudo enviar.");
 }
 
@@ -94,26 +94,50 @@ export async function updateMlItem(itemId: string, fd: FormData) {
   if (!(await hasValidSession())) throw new Error("No autorizado.");
   if (!/^MLA\d+$/.test(itemId)) throw new Error("Publicación no válida.");
   const projectId = await activeProjectId();
-  const body: Record<string, unknown> = {};
   const price = String(fd.get("price") ?? "").trim(), qty = String(fd.get("available") ?? "").trim(), status = String(fd.get("status") ?? "").trim();
-  if (price) { const n = Number(price); if (!(n > 0)) throw new Error("El precio debe ser mayor a cero."); body.price = n; }
-  if (qty) { const n = Number(qty); if (!Number.isInteger(n) || n < 0) throw new Error("El stock debe ser un número entero, 0 o más."); body.available_quantity = n; }
-  if (status) { if (!["active", "paused"].includes(status)) throw new Error("Estado no válido."); body.status = status; }
-  // Solo se envía lo que realmente cambió respecto de lo guardado.
-  const { data: cur } = await service().from("ml_resources").select("data").eq("project_id", projectId).eq("kind", "item").eq("ml_id", itemId).maybeSingle();
-  const c = (cur?.data ?? {}) as { price?: number; available_quantity?: number; status?: string };
-  if (body.price === c.price) delete body.price;
-  if (body.available_quantity === c.available_quantity) delete body.available_quantity;
-  if (body.status === c.status) delete body.status;
-  if (!Object.keys(body).length) throw new Error("No cambiaste nada.");
+  const newPrice = price ? Number(price) : undefined, newQty = qty ? Number(qty) : undefined;
+  if (newPrice !== undefined && !(newPrice > 0)) throw new Error("El precio debe ser mayor a cero.");
+  if (newQty !== undefined && (!Number.isInteger(newQty) || newQty < 0)) throw new Error("El stock debe ser un número entero, 0 o más.");
+  if (status && !["active", "paused"].includes(status)) throw new Error("Estado no válido.");
+
+  // Se compara contra lo que figura hoy en Mercado Libre (no contra la copia guardada, que puede estar desactualizada).
+  type Live = { price?: number; available_quantity?: number; status?: string; sub_status?: string[]; variations?: { id: number; price?: number; available_quantity?: number }[] };
+  let live: Live;
+  try { live = await mlGet<Live>(projectId, `/items/${itemId}`, { attributes: "id,price,available_quantity,status,sub_status,variations" }); } catch (e) { throw friendly(e); }
+  const variations = live.variations ?? [];
+
+  const body: Record<string, unknown> = {};
+  const priceChanged = newPrice !== undefined && newPrice !== live.price;
+  const qtyChanged = newQty !== undefined && newQty !== live.available_quantity;
+  if (variations.length) {
+    // Con variantes, el precio y el stock se mandan por variante.
+    if (qtyChanged && variations.length > 1) throw new Error(`Esta publicación tiene ${variations.length} variantes: el stock se edita por variante directamente en Mercado Libre. El precio y el estado sí se pueden cambiar desde acá.`);
+    if (priceChanged || qtyChanged) {
+      body.variations = variations.map((v) => ({ id: v.id, ...(priceChanged ? { price: newPrice } : {}), ...(qtyChanged ? { available_quantity: newQty } : {}) }));
+    }
+  } else {
+    if (priceChanged) body.price = newPrice;
+    if (qtyChanged) body.available_quantity = newQty;
+  }
+  const statusChanged = !!status && status !== live.status;
+  if (!Object.keys(body).length && !statusChanged) throw new Error("No cambiaste nada: lo que figura hoy en Mercado Libre ya es igual.");
+  if (status === "active" && live.status !== "active" && (newQty ?? live.available_quantity ?? 0) < 1) throw new Error("No se puede activar una publicación sin stock: cargá primero un stock de 1 o más.");
+  if (statusChanged && !["active", "paused"].includes(live.status ?? "")) throw new Error(`Mercado Libre la tiene en estado "${live.status}"${live.sub_status?.length ? ` (${live.sub_status.join(", ")})` : ""}: no se puede activar ni pausar desde acá.`);
+
+  // Primero precio/stock y después el estado, en pedidos separados (así un error en uno no deja todo a medias sin avisar).
+  const done: string[] = [];
   try {
-    await mlPost(projectId, `/items/${itemId}`, body, undefined, "PUT");
-  } catch (e) { throw friendly(e); }
+    if (Object.keys(body).length) { await mlPost(projectId, `/items/${itemId}`, body, undefined, "PUT"); done.push(priceChanged && qtyChanged ? "precio y stock" : priceChanged ? "precio" : "stock"); }
+    if (statusChanged) { await mlPost(projectId, `/items/${itemId}`, { status }, undefined, "PUT"); done.push("estado"); }
+  } catch (e) {
+    const err = friendly(e);
+    throw new Error(done.length ? `Se cambió ${done.join(" y ")}, pero ${err.message.charAt(0).toLowerCase()}${err.message.slice(1)}` : err.message);
+  }
   await processJob(projectId, "items", `/items/${itemId}`).catch(() => {});
   // El precio del catálogo acompaña al de Mercado Libre.
-  if (body.price) {
+  if (priceChanged) {
     const { data: link } = await service().from("ml_item_links").select("product_id").eq("project_id", projectId).eq("ml_item_id", itemId).maybeSingle();
-    if (link) await service().from("products").update({ price: body.price }).eq("project_id", projectId).eq("id", link.product_id);
+    if (link) await service().from("products").update({ price: newPrice }).eq("project_id", projectId).eq("id", link.product_id);
   }
   for (const path of ["/mercadolibre", "/productos", "/stock", "/"]) revalidatePath(path);
 }

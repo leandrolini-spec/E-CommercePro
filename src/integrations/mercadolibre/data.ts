@@ -48,6 +48,23 @@ export function mlData(projectId: string, opts: { messages?: "all" | number | fa
 }
 
 /**
+ * Momento exacto en que se hizo cada orden, con la zona horaria que informa Mercado Libre: número de orden -> "2026-11-05T14:23:11.000-03:00".
+ * La tabla de ventas guarda solo el día; la hora se necesita para el mapa de ventas por día y hora.
+ */
+export function mlOrderTimes(projectId: string) {
+  return memo(`ml:${projectId}:order-times`, process.env.VERCEL ? 0 : 20_000, async () => {
+    const out = new Map<string, string>();
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await service().from("ml_resources").select("ml_id,t:data->>date_created").eq("project_id", projectId).eq("kind", "order").range(from, from + 999);
+      if (error) throw new Error(`No se pudieron leer las horas de las ventas: ${error.message}`);
+      for (const r of (data ?? []) as { ml_id: string; t: string | null }[]) if (r.t) out.set(String(r.ml_id), r.t);
+      if ((data ?? []).length < 1000) break;
+    }
+    return out;
+  });
+}
+
+/**
  * Una compra de Mercado Libre puede ser un "pack" (varias órdenes juntas): la conversación vive bajo el número del pack, no el de la orden.
  * Devuelve el número de pack de cada orden que pertenece a uno.
  */
