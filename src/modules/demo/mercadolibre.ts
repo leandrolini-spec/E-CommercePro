@@ -23,7 +23,7 @@ export function demoAnswer(questionId: string, text: string) {
 /** El vendedor le escribió a un comprador desde la pantalla (queda en memoria, solo en la demo). */
 export function demoReply(orderId: string, text: string) {
   const s = store();
-  s.replies.push({ id: `demo-r${s.replies.length + 1}`, orderId, fromId: SELLER, text, date: new Date().toISOString(), read: true, fromBuyer: false });
+  s.replies.push({ id: `demo-r${s.replies.length + 1}`, orderId, fromId: SELLER, text, date: new Date().toISOString(), read: true, fromBuyer: false, attachments: [] });
 }
 
 const QUESTIONS = [
@@ -83,7 +83,7 @@ export function demoMlData(db: Db): MlData {
     if (!c) return;
     const day = Math.max(0, Math.round((Date.now() - new Date(`${s.date}T12:00:00`).getTime()) / 86400000));
     const buyer = buyerNum(c.id);
-    const add = (fromBuyer: boolean, text: string, h: number, m: number, read = true) => messages.push({ id: `dm${++k}`, orderId: s.mlOrderId!, fromId: fromBuyer ? buyer : SELLER, text, date: iso(day, h, m), read, fromBuyer });
+    const add = (fromBuyer: boolean, text: string, h: number, m: number, read = true) => messages.push({ id: `dm${++k}`, orderId: s.mlOrderId!, fromId: fromBuyer ? buyer : SELLER, text, date: iso(day, h, m), read, fromBuyer, attachments: [] });
     if (s.welcomed || s.welcomeSentAt) {
       add(false, "¡Gracias por tu compra en nuestra tienda!\n\nPara coordinar la entrega y avisarte cuando salga tu pedido, respondenos por acá completando:\nTeléfono:\nDirección (calle y número):\nLocalidad:", 10, 5);
       if (c.phone && idx % 3 !== 2) {

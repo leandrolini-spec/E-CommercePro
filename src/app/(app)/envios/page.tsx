@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ContactButtons, WhatsAppNotify } from "@/components/shared/ContactButtons";
 import { seguimientoUrl } from "@/modules/seguimiento";
 import { deliveryRules, diasLabel, entregaLabel, estimateDelivery, horarioLabel } from "@/modules/delivery";
+import { MlAttachments } from "@/components/shared/MlAttachments";
 import { DriverCard } from "./DriverCard";
 import { SupplierCard } from "./SupplierCard";
 import { findSupplier, supplierMessage, type GrowerOrder } from "@/modules/grower";
@@ -17,7 +18,7 @@ import { DataTable } from "@/components/ui/DataTable";
 import { Badge, KpiCard } from "@/components/ui/primitives";
 import { fdate, int, isoDaysAgo, today } from "@/lib/format";
 import { importMlShipments, replyToBuyer } from "@/integrations/mercadolibre/actions";
-import { mlMessagesFor } from "@/integrations/mercadolibre/data";
+import { mlMessagesFor, type MlAttachment } from "@/integrations/mercadolibre/data";
 import { activeProjectId, isSupabase } from "@/modules/repo/supabase";
 import { createShipment, deleteShipment, moveShipment, updateShipment } from "@/modules/actions";
 import { getDb } from "@/modules/data";
@@ -63,7 +64,7 @@ export default async function EnviosPage({ searchParams }: { searchParams: Promi
   const since = isoDaysAgo(30);
 
   // Mensajes de Mercado Libre de cada orden, para leerlos desde la tarjeta sin entrar al formulario.
-  const msgsByOrder = new Map<string, { id: string; text: string; date: string; fromBuyer: boolean }[]>();
+  const msgsByOrder = new Map<string, { id: string; text: string; date: string; fromBuyer: boolean; attachments: MlAttachment[] }[]>();
   if (isSupabase()) {
     // Solo las conversaciones de las órdenes que están en Envíos (antes se traían todas).
     const all = await mlMessagesFor(await activeProjectId(), [...new Set((db.shipments ?? []).map((x) => x.orderRef).filter(Boolean))]).catch(() => []);
@@ -324,7 +325,8 @@ export default async function EnviosPage({ searchParams }: { searchParams: Promi
                                         {msgs.map((m) => (
                                           <li key={m.id} className={`rounded-md px-3 py-2 text-sm leading-snug ${m.fromBuyer ? "bg-surface ring-1 ring-line" : "bg-primary/10"}`}>
                                             <p className="mb-0.5 text-[11px] text-muted"><strong>{m.fromBuyer ? customerOf(x) || "Comprador" : "Negocio"}</strong> · {fdate(m.date)}</p>
-                                            <p className="whitespace-pre-wrap">{m.text.trim() || "(mensaje vacío o adjunto)"}</p>
+                                            {(m.text.trim() || !m.attachments.length) && <p className="whitespace-pre-wrap">{m.text.trim() || "(mensaje vacío)"}</p>}
+                                            <MlAttachments items={m.attachments} />
                                           </li>
                                         ))}
                                       </ul>

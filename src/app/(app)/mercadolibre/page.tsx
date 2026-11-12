@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CreateDrawer } from "@/components/shared/CreateDrawer";
 import { bannerOf, themeProps } from "@/components/shared/platform-theme";
 import { saveMlFollowers } from "@/modules/settings-actions";
+import { MlAttachments } from "@/components/shared/MlAttachments";
 import { ActionButton, Filters, matches, PageHeader, paginate, Pager, param, type SearchParams } from "@/components/shared/list";
 import { Chart } from "@/components/ui/Chart";
 import { DataTable } from "@/components/ui/DataTable";
@@ -645,7 +646,7 @@ function MessagesTab({ sp, data, db }: { sp: SearchParams; data: Data; db: Db })
   const inDayConvs = convs.filter((c) => inDay(day, c.last.date));
   const filtered = inDayConvs.filter((c) => (matches(q, c.orderId, nameOf(c.buyerId), ...c.msgs.map((m) => m.text))) && (!turn || (turn === "mine" ? c.myTurn : !c.myTurn)));
   const { rows, page, pages, total } = paginate(filtered, sp);
-  const preview = (t: string) => (t.trim() ? t : "(mensaje vacío o adjunto)");
+  const preview = (t: string, n = 0) => (t.trim() ? t : n ? "(foto o archivo adjunto)" : "(mensaje vacío)");
 
   return (
     <div className="space-y-4">
@@ -669,14 +670,15 @@ function MessagesTab({ sp, data, db }: { sp: SearchParams; data: Data; db: Db })
             key: "t", header: "Conversación", render: (c) => (
               <details className="group max-w-xl">
                 <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-                  <p className="whitespace-pre-wrap"><span className="text-xs font-semibold text-muted">{c.last.fromBuyer ? "Comprador: " : "Vos: "}</span>{preview(c.last.text)}</p>
+                  <p className="whitespace-pre-wrap"><span className="text-xs font-semibold text-muted">{c.last.fromBuyer ? "Comprador: " : "Vos: "}</span>{preview(c.last.text, c.last.attachments.length)}</p>
                   <p className="mt-1 text-xs text-primary">{c.msgs.length} mensaje{c.msgs.length === 1 ? "" : "s"} · <span className="group-open:hidden">Ver toda la charla</span><span className="hidden group-open:inline">Ocultar</span></p>
                 </summary>
                 <ul className="mt-2 space-y-2 border-l-2 border-line pl-3">
                   {c.msgs.map((m) => (
                     <li key={m.id} className={`rounded-md px-3 py-2 text-sm ${m.fromBuyer ? "bg-bg" : "bg-primary/10"}`}>
                       <p className="mb-0.5 text-xs text-muted"><strong>{m.fromBuyer ? nameOf(m.fromId) : "Negocio"}</strong> · {fdate(m.date)}</p>
-                      <p className="whitespace-pre-wrap">{preview(m.text)}</p>
+                      {(m.text.trim() || !m.attachments.length) && <p className="whitespace-pre-wrap">{preview(m.text)}</p>}
+                      <MlAttachments items={m.attachments} />
                     </li>
                   ))}
                 </ul>
@@ -689,7 +691,7 @@ function MessagesTab({ sp, data, db }: { sp: SearchParams; data: Data; db: Db })
               <CreateDrawer
                 buttonLabel="Responder" variant={c.myTurn ? "primary" : "secondary"} title={`Responder a ${nameOf(c.buyerId)}`} action={replyToBuyer.bind(null, c.orderId, c.buyerId)}
                 fields={[
-                  { name: "ultimo", label: "Último mensaje", defaultValue: preview(c.last.text), type: "textarea", readOnly: true },
+                  { name: "ultimo", label: "Último mensaje", defaultValue: preview(c.last.text, c.last.attachments.length), type: "textarea", readOnly: true },
                   { name: "text", label: "Tu respuesta (máximo 350 por mensaje; para mandar varios, separalos con una línea ---)", type: "textarea", required: true, maxLength: 800, placeholder: "Escribí tu respuesta…" },
                 ]}
               />

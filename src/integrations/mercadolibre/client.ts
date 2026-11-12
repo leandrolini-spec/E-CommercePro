@@ -33,6 +33,21 @@ export async function mlGet<T = unknown>(projectId: string, path: string, query?
   throw lastErr ?? new MlError("Sin respuesta", 0, path);
 }
 
+/** GET autenticado de un archivo (por ejemplo la foto que adjuntó un comprador): devuelve los bytes y el tipo, sin reintentos largos. */
+export async function mlGetFile(projectId: string, path: string, query?: Record<string, string | number | undefined>): Promise<{ bytes: ArrayBuffer; type: string }> {
+  if (!path.startsWith("/") || path.includes("..") || path.includes("//")) throw new MlError("Ruta no permitida", 400, path);
+  const qs = query ? "?" + new URLSearchParams(Object.entries(query).filter(([, v]) => v !== undefined).map(([k, v]) => [k, String(v)])) : "";
+  let force = false;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const { token } = await getAccessToken(projectId, force);
+    const res = await fetch(`${API}${path}${qs}`, { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(20000) });
+    if (res.status === 401 && !force) { force = true; continue; }
+    if (!res.ok) throw new MlError(`HTTP ${res.status}`, res.status, path);
+    return { bytes: await res.arrayBuffer(), type: res.headers.get("content-type") ?? "application/octet-stream" };
+  }
+  throw new MlError("No autorizado", 401, path);
+}
+
 /**
  * POST autenticado a la API oficial (responder mensajes y preguntas). Un solo intento, sin reintentos automáticos:
  * si se repitiera, el cliente podría recibir el mismo mensaje dos veces. Solo renueva el token una vez si responde 401.

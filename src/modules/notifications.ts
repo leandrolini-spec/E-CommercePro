@@ -7,7 +7,7 @@ import type { Db } from "./types";
 export type NotifType = "venta" | "mensaje" | "pregunta" | "envio" | "reembolso";
 export type Notif = { id: string; type: NotifType; title: string; detail: string; href: string; at: string };
 
-type Msg = { id: string; orderId: string; fromId: string; text: string; date: string; fromBuyer: boolean };
+type Msg = { id: string; orderId: string; fromId: string; text: string; date: string; fromBuyer: boolean; attachments?: unknown[] };
 type Question = { id: string; text: string; status: string; created: string };
 
 /**
@@ -56,7 +56,7 @@ export function buildNotifications(db: Db, ml: { messages: Msg[]; questions: Que
       const last = [...list].sort((a, b) => a.date.localeCompare(b.date)).at(-1)!;
       if (!last.fromBuyer || last.date.slice(0, 10) < isoDaysAgo(14) || reads.has(`ml:m:${orderId}:${last.id}`) || reads.has(`done:ml:m:${orderId}:${last.id}`) || isCourtesy(last.text)) continue;
       const buyer = db.customers.find((c) => c.id === `mlb_${last.fromId}`)?.name ?? `Comprador ${last.fromId}`;
-      out.push({ id: `msg:${orderId}:${last.id}`, type: "mensaje", at: last.date, href: `/mensajes?hilo=${encodeURIComponent(`ml:m:${orderId}`)}`, title: `Mensaje de ${buyer}`, detail: last.text.trim() || "(mensaje vacío o adjunto)" });
+      out.push({ id: `msg:${orderId}:${last.id}`, type: "mensaje", at: last.date, href: `/mensajes?hilo=${encodeURIComponent(`ml:m:${orderId}`)}`, title: `Mensaje de ${buyer}`, detail: last.text.trim() || (last.attachments?.length ? "Te mandó una foto o archivo" : "(mensaje vacío)") });
     }
     // Preguntas sin responder.
     for (const q of ml.questions.filter((x) => x.status === "UNANSWERED" && !reads.has(`ml:q:${x.id}`) && !reads.has(`done:ml:q:${x.id}`)).slice(0, 30))

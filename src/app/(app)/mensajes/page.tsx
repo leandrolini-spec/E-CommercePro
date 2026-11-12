@@ -1,5 +1,7 @@
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
+import { MlAttachments } from "@/components/shared/MlAttachments";
+import type { MlAttachment } from "@/integrations/mercadolibre/data";
 import { ContactButtons } from "@/components/shared/ContactButtons";
 import { CreateDrawer } from "@/components/shared/CreateDrawer";
 import { ActionButton, PageHeader, param, type SearchParams } from "@/components/shared/list";
@@ -52,7 +54,7 @@ const GROUPS: { channel: InboxChannel; folders: { key: Folder; label: string }[]
 const STATES = [["abiertos", "Abiertos"], ["sinleer", "Sin leer"], ["antiguas", "Antiguas"], ["resueltos", "Resueltos"], ["todos", "Todos"]] as const;
 /** Una consulta abierta con más de 7 días ya no es "para responder ahora": pasa a Antiguas para no tapar lo reciente. */
 
-type Msg = { id: string; out: boolean; body: string; at: string; delivery?: WaDelivery; template?: string; referral?: string };
+type Msg = { id: string; out: boolean; body: string; at: string; delivery?: WaDelivery; template?: string; referral?: string; attachments?: MlAttachment[] };
 type Item = {
   id: string; channel: InboxChannel; kind: string; name: string; subject: string; preview: string; at: string; unread: boolean; open: boolean;
   phone: string; email: string; handle: string; customerId: string | null; link: string; saved: boolean;
@@ -144,9 +146,9 @@ export default async function MensajesPage({ searchParams }: { searchParams: Pro
         const buyerId = sorted.find((m) => m.fromBuyer)?.fromId ?? "";
         const pending = last.fromBuyer && !isCourtesy(last.text) && !reads.has(doneKey(mlMsgKey(orderId, last.id)));
         items.push({
-          id: `ml:m:${orderId}`, channel: "mercadolibre", kind: "mensaje", name: nameOfCustomer(`mlb_${buyerId}`) || "Comprador", subject: `Orden ${orderId}`, preview: last.text || "(mensaje vacío o adjunto)", at: last.date,
+          id: `ml:m:${orderId}`, channel: "mercadolibre", kind: "mensaje", name: nameOfCustomer(`mlb_${buyerId}`) || "Comprador", subject: `Orden ${orderId}`, preview: last.text || (last.attachments.length ? "(foto o archivo adjunto)" : "(mensaje vacío)"), at: last.date,
           unread: pending && !last.read && !reads.has(mlMsgKey(orderId, last.id)), readKey: mlMsgKey(orderId, last.id), open: pending, phone: "", email: "", handle: "", customerId: `mlb_${buyerId}`, link: "/mercadolibre?tab=mensajes", saved: false,
-          reply: buyerId ? { type: "buyer", packId: orderId, buyerId } : undefined, messages: sorted.slice(-10).map((m) => ({ id: m.id, out: !m.fromBuyer, body: m.text || "(mensaje vacío o adjunto)", at: m.date })),
+          reply: buyerId ? { type: "buyer", packId: orderId, buyerId } : undefined, messages: sorted.slice(-10).map((m) => ({ id: m.id, out: !m.fromBuyer, body: m.text || (m.attachments.length ? "" : "(mensaje vacío)"), at: m.date, attachments: m.attachments })),
         });
       }
     }
@@ -380,7 +382,8 @@ export default async function MensajesPage({ searchParams }: { searchParams: Pro
                 {selMessages.map((m) => (
                   <div key={m.id} className={`flex ${m.out ? "justify-end" : ""}`}>
                     <div className={`max-w-[85%] rounded-lg px-3 py-2 text-sm shadow-sm ${m.out ? "bg-primary/10" : "border border-line bg-surface"}`}>
-                      <p className="whitespace-pre-wrap break-words">{m.body}</p>
+                      {m.body && <p className="whitespace-pre-wrap break-words">{m.body}</p>}
+                      <MlAttachments items={m.attachments} />
                       <p className="mt-1 flex flex-wrap items-center gap-x-1.5 text-[11px] text-muted">
                         <span>{m.out ? "Vos" : sel.name} · {dt(m.at)}</span>
                         {m.template && <span className="rounded-full bg-mint px-1.5 py-px font-medium text-success">Plantilla: {m.template}</span>}

@@ -28,7 +28,8 @@ export type MlItem = {
   /** Promoción especial activa (descuento, oferta del día, campaña…) y publicidad paga (Product Ads). */
   promo: string | null; ads: boolean;
 };
-export type MlMessage = { id: string; orderId: string; fromId: string; text: string; date: string; read: boolean; fromBuyer: boolean };
+export type MlMessage = { id: string; orderId: string; fromId: string; text: string; date: string; read: boolean; fromBuyer: boolean; attachments: MlAttachment[] };
+export type MlAttachment = { file: string; name: string; type: string; size: number };
 export type MlQuestion = {
   id: string; itemId: string; text: string; status: string; created: string; answer: string | null; answeredAt: string | null; buyerId: string | null;
   hoursToAnswer: number | null;
@@ -122,6 +123,7 @@ function buildMessages(users: { ml_id: string; data: R }[], conversations: { ml_
       msgMap.set(String(m.id), {
         id: String(m.id), orderId: String(m.message_resources?.find((r: R) => r.name === "orders" || r.name === "packs")?.id ?? fallbackOrder), fromId: from,
         text: String(m.text ?? ""), date: String(m.message_date?.created ?? m.message_date?.received ?? ""), read: Boolean(m.message_date?.read), fromBuyer: from !== sellerId,
+        attachments: (Array.isArray(m.message_attachments) ? m.message_attachments : []).filter((a: R) => a?.filename).map((a: R) => ({ file: String(a.filename), name: String(a.original_filename ?? a.filename), type: String(a.type ?? ""), size: Number(a.size ?? 0) })),
       });
     }
   };
