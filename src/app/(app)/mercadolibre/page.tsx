@@ -500,6 +500,11 @@ function QuestionsTab({ sp, data, company, empresa }: { sp: SearchParams; data: 
   const { rows, page, pages, total } = paginate(filtered, sp);
   const byItem = new Map<string, number>();
   for (const x of all) byItem.set(x.itemId, (byItem.get(x.itemId) ?? 0) + 1);
+  // Historial: todas las preguntas anteriores del mismo comprador (sin importar el día elegido ni el filtro), de la más vieja a la más nueva.
+  const byBuyer = new Map<string, Data["questions"]>();
+  for (const x of data.questions) if (x.buyerId) byBuyer.set(x.buyerId, [...(byBuyer.get(x.buyerId) ?? []), x]);
+  const previous = (x: Data["questions"][number]) => (x.buyerId ? (byBuyer.get(x.buyerId) ?? []).filter((p) => p.id !== x.id && p.created < x.created).sort((a, b) => a.created.localeCompare(b.created)) : []);
+  const historyText = (x: Data["questions"][number]) => previous(x).map((p) => `${fdate(p.created)} · ${titles.get(p.itemId) ?? p.itemId}\nComprador: ${p.text}\n${p.answer ? `Nosotros: ${p.answer}` : "Nosotros: (sin responder)"}`).join("\n\n");
   return (
     <div className="space-y-4">
       <DayNav sp={sp} tab="preguntas" />
@@ -516,13 +521,38 @@ function QuestionsTab({ sp, data, company, empresa }: { sp: SearchParams; data: 
         columns={[
           { key: "d", header: "Fecha", render: (x) => fdate(x.created) },
           { key: "i", header: "Publicación", render: (x) => <span className="text-xs">{titles.get(x.itemId) ?? x.itemId}</span> },
-          { key: "q", header: "Pregunta", render: (x) => <div><p>{x.text}</p>{x.answer && <p className="mt-1 text-xs text-muted">↳ {x.answer}</p>}</div> },
+          {
+            key: "q", header: "Pregunta", render: (x) => {
+              const prev = previous(x);
+              return (
+                <div>
+                  <p>{x.text}</p>
+                  {x.answer && <p className="mt-1 text-xs text-muted">↳ {x.answer}</p>}
+                  {prev.length > 0 && (
+                    <details className="mt-2 text-xs">
+                      <summary className="cursor-pointer font-medium text-muted">Ver conversación anterior con este comprador ({prev.length})</summary>
+                      <div className="mt-2 space-y-2 border-l-2 border-line pl-3">
+                        {prev.map((p) => (
+                          <div key={p.id}>
+                            <p className="text-muted">{fdate(p.created)} · {titles.get(p.itemId) ?? p.itemId}</p>
+                            <p>{p.text}</p>
+                            <p className="text-muted">↳ {p.answer ?? "(sin responder)"}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                  )}
+                </div>
+              );
+            },
+          },
           { key: "s", header: "Estado", render: (x) => <Badge fixed tone={Q_STATUS[x.status]?.tone ?? "neutral"}>{Q_STATUS[x.status]?.label ?? x.status}</Badge> },
           {
             key: "r", header: "", render: (x) => x.status === "UNANSWERED" && (
               <CreateDrawer
                 buttonLabel="Responder" title="Responder pregunta" action={answerQuestion.bind(null, x.id)}
                 fields={[
+                  ...(previous(x).length ? [{ name: "historial", label: `Conversación anterior con este comprador (${previous(x).length})`, defaultValue: historyText(x), type: "textarea" as const, readOnly: true }] : []),
                   { name: "pregunta", label: "Pregunta del comprador", defaultValue: x.text, type: "textarea", readOnly: true },
                   { name: "text", label: "Tu respuesta", type: "textarea", required: true, maxLength: 2000, placeholder: "Escribí la respuesta…", quick: quickForQuestion(company, empresa, { productos: titles.get(x.itemId) ?? "" }) },
                 ]}
