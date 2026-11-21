@@ -500,11 +500,31 @@ function QuestionsTab({ sp, data, company, empresa }: { sp: SearchParams; data: 
   const { rows, page, pages, total } = paginate(filtered, sp);
   const byItem = new Map<string, number>();
   for (const x of all) byItem.set(x.itemId, (byItem.get(x.itemId) ?? 0) + 1);
-  // Historial: todas las preguntas anteriores del mismo comprador (sin importar el día elegido ni el filtro), de la más vieja a la más nueva.
+  // Historial completo de cada comprador: sus preguntas anteriores (de cualquier publicación) y los mensajes de sus compras, mezclados por fecha.
   const byBuyer = new Map<string, Data["questions"]>();
   for (const x of data.questions) if (x.buyerId) byBuyer.set(x.buyerId, [...(byBuyer.get(x.buyerId) ?? []), x]);
-  const previous = (x: Data["questions"][number]) => (x.buyerId ? (byBuyer.get(x.buyerId) ?? []).filter((p) => p.id !== x.id && p.created < x.created).sort((a, b) => a.created.localeCompare(b.created)) : []);
-  const historyText = (x: Data["questions"][number]) => previous(x).map((p) => `${fdate(p.created)} · ${titles.get(p.itemId) ?? p.itemId}\nComprador: ${p.text}\n${p.answer ? `Nosotros: ${p.answer}` : "Nosotros: (sin responder)"}`).join("\n\n");
+  const ordersOf = new Map<string, Set<string>>();
+  for (const m of data.messages) if (m.fromBuyer && m.fromId) ordersOf.set(m.fromId, (ordersOf.get(m.fromId) ?? new Set()).add(m.orderId));
+  type Turn = { key: string; date: string; where: string; lines: { who: string; text: string }[] };
+  const historyOf = (x: Data["questions"][number]): Turn[] => {
+    if (!x.buyerId) return [];
+    const turns: Turn[] = [];
+    for (const p of byBuyer.get(x.buyerId) ?? []) {
+      if (p.id === x.id || p.created >= x.created) continue;
+      turns.push({ key: `q${p.id}`, date: p.created, where: `Pregunta en ${titles.get(p.itemId) ?? p.itemId}`, lines: [{ who: "Comprador", text: p.text }, { who: "Nosotros", text: p.answer ?? "(sin responder)" }] });
+    }
+    const orders = ordersOf.get(x.buyerId);
+    if (orders) {
+      const seen = new Set<string>();
+      for (const m of data.messages) {
+        if (!orders.has(m.orderId) || seen.has(m.id) || !m.date || m.date >= x.created) continue;
+        seen.add(m.id);
+        turns.push({ key: `m${m.id}`, date: m.date, where: "Mensaje de la compra", lines: [{ who: m.fromBuyer ? "Comprador" : "Nosotros", text: m.text.trim() || (m.attachments.length ? "(foto o archivo adjunto)" : "(mensaje vacío)") }] });
+      }
+    }
+    return turns.sort((u, v) => u.date.localeCompare(v.date));
+  };
+  const historyText = (turns: Turn[]) => turns.map((t) => `${fdate(t.date)} · ${t.where}\n${t.lines.map((l) => `${l.who}: ${l.text}`).join("\n")}`).join("\n\n");
   return (
     <div className="space-y-4">
       <DayNav sp={sp} tab="preguntas" />
@@ -523,24 +543,30 @@ function QuestionsTab({ sp, data, company, empresa }: { sp: SearchParams; data: 
           { key: "i", header: "Publicación", render: (x) => <span className="text-xs">{titles.get(x.itemId) ?? x.itemId}</span> },
           {
             key: "q", header: "Pregunta", render: (x) => {
-              const prev = previous(x);
+              const hist = historyOf(x);
               return (
                 <div>
                   <p>{x.text}</p>
                   {x.answer && <p className="mt-1 text-xs text-muted">↳ {x.answer}</p>}
-                  {prev.length > 0 && (
-                    <details className="mt-2 text-xs">
-                      <summary className="cursor-pointer font-medium text-muted">Ver conversación anterior con este comprador ({prev.length})</summary>
-                      <div className="mt-2 space-y-2 border-l-2 border-line pl-3">
-                        {prev.map((p) => (
-                          <div key={p.id}>
-                            <p className="text-muted">{fdate(p.created)} · {titles.get(p.itemId) ?? p.itemId}</p>
-                            <p>{p.text}</p>
-                            <p className="text-muted">↳ {p.answer ?? "(sin responder)"}</p>
+                  {hist.length > 0 ? (
+                    <details className="group mt-2 text-xs">
+                      <summary className="flex cursor-pointer list-none items-center gap-1.5 font-medium text-ink [&::-webkit-details-marker]:hidden">
+                        <span aria-hidden className="inline-block text-[10px] transition-transform group-open:rotate-90">▶</span>
+                        Historial completo con este comprador ({hist.length})
+                      </summary>
+                      <div className="mt-2 max-h-80 space-y-3 overflow-y-auto border-l-2 border-line pl-3">
+                        {hist.map((t) => (
+                          <div key={t.key}>
+                            <p className="text-muted">{fdate(t.date)} · {t.where}</p>
+                            {t.lines.map((l, i) => (
+                              <p key={i}><span className="font-medium">{l.who}:</span> <span className={l.who === "Nosotros" ? "text-muted" : ""}>{l.text}</span></p>
+                            ))}
                           </div>
                         ))}
                       </div>
                     </details>
+                  ) : (
+                    <p className="mt-2 text-xs text-muted">Primera consulta de este comprador</p>
                   )}
                 </div>
               );
@@ -552,7 +578,7 @@ function QuestionsTab({ sp, data, company, empresa }: { sp: SearchParams; data: 
               <CreateDrawer
                 buttonLabel="Responder" title="Responder pregunta" action={answerQuestion.bind(null, x.id)}
                 fields={[
-                  ...(previous(x).length ? [{ name: "historial", label: `Conversación anterior con este comprador (${previous(x).length})`, defaultValue: historyText(x), type: "textarea" as const, readOnly: true }] : []),
+                  ...(historyOf(x).length ? [{ name: "historial", label: `Historial completo con este comprador (${historyOf(x).length})`, defaultValue: historyText(historyOf(x)), type: "textarea" as const, readOnly: true }] : []),
                   { name: "pregunta", label: "Pregunta del comprador", defaultValue: x.text, type: "textarea", readOnly: true },
                   { name: "text", label: "Tu respuesta", type: "textarea", required: true, maxLength: 2000, placeholder: "Escribí la respuesta…", quick: quickForQuestion(company, empresa, { productos: titles.get(x.itemId) ?? "" }) },
                 ]}
