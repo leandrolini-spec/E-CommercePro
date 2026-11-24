@@ -23,7 +23,7 @@ export default async function EtiquetasPage({ searchParams }: { searchParams: Pr
         ? "@page { size: 100mm 150mm; margin: 0 } .label { width: 100mm; height: 150mm; page-break-after: always; border: none !important; }"
         : "@page { size: A4; margin: 8mm } @media print { .sheet { gap: 0 !important } }"}</style>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 print:hidden">
-        <Link href="/etiquetas" className="text-sm text-gray-500 underline">← Volver a elegir etiquetas</Link>
+        <Link href="/envios?panel=etiquetas" className="text-sm text-gray-500 underline">← Volver a elegir etiquetas</Link>
         <div className="flex flex-wrap items-center gap-2">
           {([["a4", "Hoja A4 (4 por hoja)"], ["10x15", "Etiqueta 10 × 15 cm"]] as const).map(([k, label]) => (
             <Link key={k} href={qs(k)} className={`rounded-md border px-3 py-1.5 text-sm ${k === format ? "border-black bg-black text-white" : "border-gray-300 text-gray-600"}`}>{label}</Link>

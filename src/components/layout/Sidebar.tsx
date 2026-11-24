@@ -3,9 +3,18 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import type { ModuleDef } from "@/core/modules";
 import { MenuIcon } from "./menu-icons";
+
+const OPEN_KEY = "menu-grupos-estado";
+const OPEN_EVENT = "menu-grupos";
+const subscribeOpen = (cb: () => void) => {
+  window.addEventListener(OPEN_EVENT, cb);
+  window.addEventListener("storage", cb);
+  return () => { window.removeEventListener(OPEN_EVENT, cb); window.removeEventListener("storage", cb); };
+};
+const readOpen = () => { try { return localStorage.getItem(OPEN_KEY) || "{}"; } catch { return "{}"; } };
 
 /** `soft` es el color secundario de la marca: se usa para los títulos claros del menú en lugar del blanco. */
 export function Sidebar({ modules, name, logoUrl, logoOnDark, soft }: { modules: ModuleDef[]; name: string; logoUrl?: string; logoOnDark?: boolean; soft: string }) {
@@ -25,26 +34,83 @@ export function Sidebar({ modules, name, logoUrl, logoOnDark, soft }: { modules:
     router.refresh();
   }
 
+  // Estado de cada grupo que la persona abrió o cerró (se recuerda en este navegador). Sin elección, solo está abierto el de la pantalla actual.
+  const stateRaw = useSyncExternalStore(subscribeOpen, readOpen, () => "{}");
+  const chosen: Record<string, boolean> = (() => { try { return JSON.parse(stateRaw); } catch { return {}; } })();
+  const isActive = (m: ModuleDef) => (m.slug === "" ? pathname === "/" : pathname.startsWith(`/${m.slug}`));
+  const activeGroup = modules.find(isActive)?.group;
+  const isOpen = (g: string) => chosen[g] ?? g === activeGroup;
+  function toggle(g: string) {
+    const next = { ...chosen, [g]: !isOpen(g) };
+    try { localStorage.setItem(OPEN_KEY, JSON.stringify(next)); } catch { /* sin almacenamiento */ }
+    window.dispatchEvent(new Event(OPEN_EVENT));
+  }
+
+  // Secciones en el orden del menú: ítems sueltos o grupos con título.
+  const sections: { group?: string; items: ModuleDef[] }[] = [];
+  for (const m of modules) {
+    const last = sections[sections.length - 1];
+    if (m.group && last?.group === m.group) last.items.push(m);
+    else sections.push({ group: m.group, items: [m] });
+  }
+
+  const link = (m: ModuleDef, nested = false) => {
+    const active = isActive(m);
+    return (
+      <Link
+        key={m.slug}
+        href={`/${m.slug}`}
+        onClick={() => setOpen(false)}
+        aria-label={m.label}
+        style={{ color: soft }}
+        className={`group/nav flex min-h-10 items-center rounded-full px-4 text-sm font-medium transition-all duration-200 ${m.logo ? "" : "gap-3 py-2"} ${nested ? "min-h-9" : ""} ${active ? "bg-white/10 ring-1 ring-white/10" : "opacity-75 hover:translate-x-0.5 hover:bg-white/[0.07] hover:opacity-100"}`}
+      >
+        {m.logo ? <img src={m.logo} alt={m.label} style={{ height: m.logoHeight ?? 24 }} className="block w-auto" /> : <><MenuIcon slug={m.slug} />{m.label}</>}
+        {active && <span aria-hidden className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-accent shadow-[0_0_8px_rgb(25_195_125/0.9)]" />}
+      </Link>
+    );
+  };
+
   const nav = (
     <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto overscroll-contain px-3 pb-4 pt-4">
-      {modules.map((m, i) => {
-        const href = `/${m.slug}`;
-        // Línea fina que separa las plataformas (con logo) del resto del menú.
-        const divider = Boolean(m.logo) && !modules[i + 1]?.logo;
-        const active = m.slug === "" ? pathname === "/" : pathname.startsWith(href);
+      {sections.map((sec, i) => {
+        const prev = sections[i - 1];
+        const first = sec.items[0];
+        // Líneas finas: debajo de las plataformas (con logo) y antes de lo que va suelto al final (Configuración).
+        const dividerBefore = !sec.group && Boolean(prev?.group);
+        const dividerAfter = Boolean(first.logo) && !sections[i + 1]?.items[0]?.logo;
+        if (!sec.group) {
+          return (
+            <div key={first.slug}>
+              {dividerBefore && <div className="mx-3 my-3 h-px bg-white/10" aria-hidden />}
+              {link(first)}
+              {dividerAfter && <div className="mx-3 my-3 h-px bg-white/10" aria-hidden />}
+            </div>
+          );
+        }
+        const g = sec.group;
+        const open = isOpen(g);
+        const hasActive = g === activeGroup;
         return (
-          <div key={m.slug}>
-          <Link
-            href={href}
-            onClick={() => setOpen(false)}
-            aria-label={m.label}
-            style={{ color: soft }}
-            className={`group/nav flex min-h-10 items-center rounded-full px-4 text-sm font-medium transition-all duration-200 ${m.logo ? "" : "gap-3 py-2"} ${active ? "bg-white/10 ring-1 ring-white/10" : "opacity-75 hover:translate-x-0.5 hover:bg-white/[0.07] hover:opacity-100"}`}
-          >
-            {m.logo ? <img src={m.logo} alt={m.label} style={{ height: m.logoHeight ?? 24 }} className="block w-auto" /> : <><MenuIcon slug={m.slug} />{m.label}</>}
-            {active && <span aria-hidden className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-accent shadow-[0_0_8px_rgb(25_195_125/0.9)]" />}
-          </Link>
-          {divider && <div className="mx-3 my-3 h-px bg-white/10" aria-hidden />}
+          <div key={g} className="pt-1.5">
+            <button
+              type="button"
+              onClick={() => toggle(g)}
+              aria-expanded={open}
+              style={{ "--soft": soft } as React.CSSProperties}
+              className={`group/head relative flex w-full items-center gap-2 overflow-hidden rounded-full px-4 py-2 text-left text-xs font-bold uppercase tracking-[0.12em] text-[var(--soft)] transition-colors duration-300 before:absolute before:inset-0 before:origin-left before:scale-x-0 before:rounded-full before:bg-[#19c37d] before:transition-transform before:duration-300 before:ease-out hover:text-[#0f1115] hover:before:scale-x-100 ${open ? "bg-white/[0.06]" : ""}`}
+            >
+              <span aria-hidden className={`relative h-1.5 w-1.5 shrink-0 rounded-full transition-all duration-300 ${hasActive ? "bg-accent shadow-[0_0_8px_rgb(25_195_125/0.9)] group-hover/head:bg-[#0f1115] group-hover/head:shadow-none" : "bg-white/25 group-hover/head:bg-[#0f1115]"}`} />
+              <span className="relative">{g}</span>
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={`relative ml-auto h-4 w-4 transition-transform duration-300 ease-out ${open ? "" : "-rotate-90"}`} aria-hidden>
+                <path d="m5 8 5 5 5-5" />
+              </svg>
+            </button>
+            <div className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
+              <div inert={!open} className="overflow-hidden">
+                <div className="ml-6 mt-1 space-y-0.5 border-l border-white/10 pl-2">{sec.items.map((m) => link(m, true))}</div>
+              </div>
+            </div>
           </div>
         );
       })}

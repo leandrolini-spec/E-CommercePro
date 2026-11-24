@@ -15,14 +15,15 @@ import { IconArrowLeft, IconPencil, IconWhatsApp } from "@/components/shared/ico
 import { CreateDrawer } from "@/components/shared/CreateDrawer";
 import { ActionButton, Filters, matches, PageHeader, param, type SearchParams } from "@/components/shared/list";
 import { DataTable } from "@/components/ui/DataTable";
-import { Badge, KpiCard } from "@/components/ui/primitives";
+import { Badge } from "@/components/ui/primitives";
 import { fdate, int, isoDaysAgo, today } from "@/lib/format";
 import { importMlShipments, replyToBuyer } from "@/integrations/mercadolibre/actions";
 import { mlMessagesFor, type MlAttachment } from "@/integrations/mercadolibre/data";
 import { activeProjectId, isSupabase } from "@/modules/repo/supabase";
 import { createShipment, deleteShipment, moveShipment, updateShipment } from "@/modules/actions";
 import { getDb } from "@/modules/data";
-import { labelCustomerDoc } from "@/modules/labels";
+import { labelCustomerDoc, labelMissing } from "@/modules/labels";
+import { LabelPicker, type LabelRow } from "@/components/shared/LabelPicker";
 import { DEFAULT_MESSAGES, renderMessage, stagesOf } from "@/modules/shipments";
 import type { Shipment } from "@/modules/types";
 
@@ -71,12 +72,17 @@ export default async function EnviosPage({ searchParams }: { searchParams: Promi
     for (const m of all) if (m.orderId) msgsByOrder.set(m.orderId, [...(msgsByOrder.get(m.orderId) ?? []), m]);
   }
   const everything = db.shipments ?? [];
+  // "Actuales": lo que está en curso y lo entregado hoy (con menos de 30 días). "Últimos 15 días": además, todo lo entregado en ese plazo.
+  const hoyIso = today();
+  const since15 = isoDaysAgo(15);
+  const vencido = (x: Shipment) => x.stage === "entregado" && (x.deliveredAt || x.createdAt) < hoyIso;
+  const visibleActual = (x: Shipment) => !vencido(x) && (x.createdAt >= since || !FINISHED.includes(x.stage));
+  const visible15 = (x: Shipment) => visibleActual(x) || x.createdAt >= since15;
   const filtered = everything
     .filter((x) => matches(q, customerOf(x), x.items, x.address, x.city, x.orderRef, x.phone, x.tracking) && (!channel || x.channel === channel) && (!from || x.createdAt >= from) && (!to || x.createdAt <= to))
-    // Por defecto se muestran los últimos 30 días y todo lo que todavía está en curso; "Ver todo el historial" muestra el resto.
-    .filter((x) => all || from || to || x.createdAt >= since || !FINISHED.includes(x.stage))
+    .filter((x) => from || to || (all ? visible15(x) : visibleActual(x)))
     .sort((a, b) => (b.dispatchedAt ?? b.createdAt).localeCompare(a.dispatchedAt ?? a.createdAt) || b.id.localeCompare(a.id));
-  const hidden = everything.length - everything.filter((x) => all || x.createdAt >= since || !FINISHED.includes(x.stage)).length;
+  const ocultosTotal = everything.filter((x) => !all && !from && !to && visible15(x) && !visibleActual(x)).length;
   const known = new Set(stages.map((s) => s.id));
   const columns = [...stages, ...(filtered.some((x) => !known.has(x.stage)) ? [{ id: "__sin", name: "Sin etapa", color: "#94a3b8" }] : [])];
   const stageOf = (x: Shipment) => (known.has(x.stage) ? x.stage : "__sin");
@@ -133,6 +139,21 @@ export default async function EnviosPage({ searchParams }: { searchParams: Promi
       entrega: entregaLabel(etaOf(x)), horario: horarioLabel(rules), seguimiento: x.tracking, enlace: "", dias: diasLabel(rules),
     });
   };
+  // Los paneles del proveedor, el reparto y las etiquetas se abren de a uno con solapas.
+  const panelParam = param(sp, "panel");
+  const panel = ["proveedor", "reparto", "etiquetas"].includes(panelParam) ? panelParam : "";
+  const ownShipments = everything.filter((x) => isOwn(x.carrier));
+  const repartoCount = ownShipments.filter((x) => x.stage === "empaquetado" || x.stage === "en_viaje").length;
+  const etiquetasCount = everything.filter((x) => x.stage === "empaquetado").length;
+  // Etiquetas: se elige a quiénes imprimir; venir con ?ids= o ?stage= deja esos envíos ya elegidos.
+  const labelRows: LabelRow[] = panel !== "etiquetas" ? [] : [...everything].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).map((x) => ({
+    id: x.id, customer: x.customer, address: x.address, city: x.city, carrier: carrierName(x.carrier), external: isExternal(x.carrier),
+    channel: x.channel, orderRef: x.orderRef, stageId: x.stage, stageName: stages.find((s) => s.id === x.stage)?.name ?? x.stage,
+    date: fdate(x.createdAt), final: FINISHED.includes(x.stage), missing: labelMissing(db, x),
+  }));
+  const idsParam = param(sp, "ids").split(",").map((v) => v.trim()).filter(Boolean);
+  const stageParam = param(sp, "stage");
+  const labelPreselect = idsParam.length ? idsParam : stageParam ? labelRows.filter((r) => r.stageId === stageParam).map((r) => r.id) : [];
   const inTransit = everything.filter((x) => x.stage === "en_viaje").length;
   const pending = everything.filter((x) => x.stage === stages[0].id || x.stage === "preparado" || x.stage === "empaquetado").length;
   // Celular: se ve una etapa por vez y se recorren con las flechas de arriba (en escritorio se ven todas las columnas).
@@ -162,25 +183,65 @@ export default async function EnviosPage({ searchParams }: { searchParams: Promi
         actions={
           <>
             <CreateDrawer buttonLabel="Nuevo envío" title="Nuevo envío" action={createShipment} fields={fields()} />
-            <Link href="/etiquetas" className="inline-flex h-9 items-center gap-2 rounded-md bg-ink px-3.5 text-sm font-medium text-white hover:opacity-90"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden><path d="M6 7V3h8v4M6 14H4.5A1.5 1.5 0 0 1 3 12.5v-4A1.5 1.5 0 0 1 4.5 7h11A1.5 1.5 0 0 1 17 8.5v4a1.5 1.5 0 0 1-1.5 1.5H14M6 11h8v6H6z" /></svg>Imprimir etiquetas ({int(everything.filter((x) => x.stage === "empaquetado").length)})</Link>
             <Link href="/envios/resumen" className="inline-flex h-9 items-center gap-2 rounded-md border border-line bg-surface px-3.5 text-sm font-medium text-ink hover:bg-bg">Imprimir resumen</Link>
             <ActionButton action={importMlShipments} label="Traer envíos de ML" variant="secondary" tall />
           </>
         }
       />
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KpiCard label="Por preparar" value={int(pending)} hint="Compra + preparado + empaquetado" />
-        <KpiCard label="En viaje" value={int(inTransit)} hint={inTransit ? "Pedidos que están saliendo a entregar" : "Ninguno en este momento"} />
-        <KpiCard label="Entregados esta semana" value={int(everything.filter((x) => x.stage === "entregado" && (x.deliveredAt ?? x.dispatchedAt ?? x.createdAt) >= isoDaysAgo(6)).length)} />
-        <KpiCard label="Con reclamos" value={int(everything.filter((x) => ["no_entregado", "volvio"].includes(x.stage)).length)} hint="No se entregó o volvió a depósito" />
-      </section>
-      <SupplierCard db={db} orders={growerOrders} />
-      <DriverCard db={db} shipments={everything.filter((x) => isOwn(x.carrier))} />
-      <nav className="flex gap-1.5" aria-label="Vista">
-        {([["tablero", "Tablero"], ["lista", "Lista"]] as const).map(([k, label]) => (
-          <Link key={k} href={href({ view: k })} className={`rounded-md px-3 py-1.5 text-sm font-medium ${k === view ? "bg-primary text-white" : "border border-line bg-surface text-muted hover:text-ink"}`}>{label}</Link>
+      <section className="grid grid-cols-2 overflow-hidden rounded-2xl border border-line bg-surface lg:grid-cols-4">
+        {([
+          [pending, "Por preparar"],
+          [inTransit, "En viaje"],
+          [everything.filter((x) => x.stage === "entregado" && (x.deliveredAt ?? x.dispatchedAt ?? x.createdAt) >= isoDaysAgo(6)).length, "Entregados esta semana"],
+          [everything.filter((x) => ["no_entregado", "volvio"].includes(x.stage)).length, "Con reclamos"],
+        ] as const).map(([n, label], i) => (
+          <div key={label} className={`px-5 py-3.5 ${i % 2 ? "border-l border-line" : ""} ${i > 1 ? "border-t border-line lg:border-t-0" : ""} ${i === 2 ? "lg:border-l" : ""}`}>
+            <p className="text-2xl font-semibold leading-tight">{int(n)}</p>
+            <p className="text-sm text-muted">{label}</p>
+          </div>
         ))}
+      </section>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+      <nav className="flex items-center gap-1 overflow-x-auto rounded-full border border-line bg-surface p-1.5" aria-label="Secciones">
+        {([
+          { k: "tablero", label: "Tablero", n: 0, to: href({ panel: "", view: "tablero" }), icon: <><rect x="3" y="4" width="4" height="12" rx="1" /><rect x="8" y="4" width="4" height="8" rx="1" /><rect x="13" y="4" width="4" height="10" rx="1" /></> },
+          { k: "lista", label: "Lista", n: 0, to: href({ panel: "", view: "lista" }), icon: <path d="M7 5h10M7 10h10M7 15h10M3 5h.01M3 10h.01M3 15h.01" /> },
+          { k: "sep" },
+          { k: "proveedor", label: "Proveedor", n: growerOrders.length, to: href({ panel: "proveedor" }), icon: <path d="M4 16c0-7 4-11 12-12 0 8-4 12-11 12M4 16c2-3 4-5 7-7" /> },
+          { k: "reparto", label: "Reparto", n: repartoCount, to: href({ panel: "reparto" }), icon: <><circle cx="10" cy="10" r="7" /><circle cx="10" cy="10" r="1.5" /><path d="M3 10h5.5M11.5 10H17M10 11.5V17" /></> },
+          { k: "etiquetas", label: "Etiquetas", n: etiquetasCount, to: href({ panel: "etiquetas" }), icon: <path d="M6 7V3h8v4M6 14H4.5A1.5 1.5 0 0 1 3 12.5v-4A1.5 1.5 0 0 1 4.5 7h11A1.5 1.5 0 0 1 17 8.5v4a1.5 1.5 0 0 1-1.5 1.5H14M6 11h8v6H6z" /> },
+        ] as const).map((t) => {
+          if (t.k === "sep") return <span key="sep" aria-hidden className="mx-2 h-6 w-px shrink-0 bg-line" />;
+          const on = t.k === (panel || view);
+          return (
+            <Link key={t.k} scroll={false} href={t.to} aria-current={on ? "page" : undefined} className={`inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${on ? "bg-ink text-white" : "text-muted hover:bg-bg hover:text-ink"}`}>
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]" aria-hidden>{t.icon}</svg>
+              {t.label}
+              {t.n > 0 && <span className={`rounded-full px-2 text-xs ${on ? "bg-white/20 text-white" : "bg-bg text-ink"}`}>{t.n}</span>}
+            </Link>
+          );
+        })}
       </nav>
+      {panel === "" && (
+        <div className="inline-flex shrink-0 rounded-full border border-line bg-surface p-1 text-sm font-semibold" role="group" aria-label="Período">
+          <Link scroll={false} href={href({ all: "" })} aria-current={!all ? "page" : undefined} className={`rounded-full px-4 py-2 ${!all ? "bg-ink text-white" : "text-muted hover:text-ink"}`}>Actuales</Link>
+          <Link scroll={false} href={href({ all: "1" })} aria-current={all ? "page" : undefined} className={`inline-flex items-center gap-2 rounded-full px-4 py-2 ${all ? "bg-ink text-white" : "text-muted hover:text-ink"}`}>
+            Últimos 15 días
+            {!all && ocultosTotal > 0 && <span className="rounded-full bg-bg px-2 text-xs text-ink">+{ocultosTotal}</span>}
+          </Link>
+        </div>
+      )}
+      </div>
+      {panel === "proveedor" && <SupplierCard db={db} orders={growerOrders} />}
+      {panel === "reparto" && <DriverCard db={db} shipments={ownShipments} />}
+      {panel === "etiquetas" && (
+        <div className="space-y-3">
+          <div className="flex justify-end"><Link href="/etiquetas/bandeja" className="inline-flex h-9 items-center gap-2 rounded-md border border-line bg-surface px-3.5 text-sm font-medium text-ink hover:bg-bg">Etiquetas de bandeja</Link></div>
+          <LabelPicker rows={labelRows} stages={stages.map((s) => ({ id: s.id, name: s.name }))} preselect={labelPreselect} />
+        </div>
+      )}
+      {panel === "" && (
+      <>
       <Filters sp={sp} dates searchPlaceholder="Buscar por cliente, producto, dirección, orden o teléfono" filters={[{ name: "channel", label: "Canal", options: db.settings.channels }]} />
       {view === "tablero" && !todas && curCol && (
         <div className="flex items-stretch gap-2 md:hidden" aria-label="Etapas">
@@ -195,8 +256,6 @@ export default async function EnviosPage({ searchParams }: { searchParams: Promi
       {view === "tablero" && (
         <p className="text-center text-xs md:hidden"><Link href={href({ etapa: todas ? current : "todas" })} className="text-primary underline">{todas ? "Ver de a una etapa" : "Ver todas las etapas juntas"}</Link></p>
       )}
-      {hidden > 0 && !all && <p className="text-xs text-muted">Se ocultan {hidden} envíos ya entregados de hace más de 30 días. <Link href={href({ all: "1" })} className="text-primary underline">Ver todo el historial</Link></p>}
-      {all && <p className="text-xs text-muted">Mostrando todo el historial. <Link href={href({ all: "" })} className="text-primary underline">Volver a los últimos 30 días</Link></p>}
 
       {view === "tablero" ? (
         <div className="flex flex-col gap-3 pb-3 md:flex-row md:overflow-x-auto">
@@ -207,7 +266,7 @@ export default async function EnviosPage({ searchParams }: { searchParams: Promi
                 <h2 className="mb-2 flex items-center justify-between px-2 pt-1 text-sm font-semibold">
                   <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full" style={{ background: col.color }} aria-hidden />{col.name}</span>
                   <span className="flex items-center gap-1.5">
-                    {cards.length > 0 && <Link href={`/etiquetas?stage=${col.id}`} title={`Imprimir las etiquetas de ${col.name}`} aria-label={`Imprimir las etiquetas de ${col.name}`} className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-line bg-surface text-muted hover:text-ink"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden><path d="M6 7V3h8v4M6 14H4.5A1.5 1.5 0 0 1 3 12.5v-4A1.5 1.5 0 0 1 4.5 7h11A1.5 1.5 0 0 1 17 8.5v4a1.5 1.5 0 0 1-1.5 1.5H14M6 11h8v6H6z" /></svg></Link>}
+                    {cards.length > 0 && <Link href={`/envios?panel=etiquetas&stage=${col.id}`} title={`Imprimir las etiquetas de ${col.name}`} aria-label={`Imprimir las etiquetas de ${col.name}`} className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-line bg-surface text-muted hover:text-ink"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden><path d="M6 7V3h8v4M6 14H4.5A1.5 1.5 0 0 1 3 12.5v-4A1.5 1.5 0 0 1 4.5 7h11A1.5 1.5 0 0 1 17 8.5v4a1.5 1.5 0 0 1-1.5 1.5H14M6 11h8v6H6z" /></svg></Link>}
                     {GROWER_STAGES.includes(col.id) && (() => {
                       const orders = cards.map(toGrower);
                       if (!orders.length) return null;
@@ -370,6 +429,8 @@ export default async function EnviosPage({ searchParams }: { searchParams: Promi
             { key: "ac", header: "", render: (x) => <CreateDrawer buttonLabel="Editar" variant="secondary" title={`Envío de ${customerOf(x) || "cliente"}`} action={updateShipment.bind(null, x.id)} fields={fields(x)} /> },
           ]}
         />
+      )}
+      </>
       )}
     </div>
   );

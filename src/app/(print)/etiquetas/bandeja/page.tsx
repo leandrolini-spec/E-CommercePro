@@ -30,7 +30,7 @@ export default async function EtiquetasPackPage({ searchParams }: { searchParams
     <div className="mx-auto max-w-5xl px-4 py-6 print:max-w-none print:p-0">
       <style>{"@page { size: A4; margin: 8mm } .bl { width: 100%; height: 55mm; overflow: hidden; break-inside: avoid; } @media print { .bsheet { gap: 0 !important } }"}</style>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 print:hidden">
-        <Link href="/etiquetas" className="text-sm text-gray-500 underline">← Volver a Etiquetas</Link>
+        <Link href="/envios?panel=etiquetas" className="text-sm text-gray-500 underline">← Volver a Etiquetas</Link>
         <PrintButton />
       </div>
       <p className="mb-4 text-sm text-gray-600 print:hidden">
