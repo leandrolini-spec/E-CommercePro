@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { ExportCsv } from "@/components/shared/ExportCsv";
 import { InformeContador } from "./InformeContador";
 import { PageHeader, param, type SearchParams } from "@/components/shared/list";
@@ -7,8 +8,9 @@ import { DataTable } from "@/components/ui/DataTable";
 import { Guide } from "@/components/ui/Guide";
 import { Alert, KpiCard } from "@/components/ui/primitives";
 import { fdate, int, money, pct, toCsv } from "@/lib/format";
-import { sociedadDb, balance, byProduct, costAssumptions, perUnit, PERIODS, periodRange, saleTotals, type Period } from "@/modules/calc";
+import { sociedadDb, balance, costAssumptions, perUnit, PERIODS, periodRange, saleTotals, type Period } from "@/modules/calc";
 import { getDb } from "@/modules/data";
+import { COMISION_PCT, profitabilityByProduct } from "@/modules/rentabilidad";
 import type { Sale } from "@/modules/types";
 
 const REPORTS = [
@@ -48,7 +50,7 @@ export default async function ReportesPage({ searchParams }: PageProps<"/reporte
   }
   const db = sociedadDb(await getDb());
   const report = REPORTS.find((r) => r.key === param(sp, "r"))?.key ?? "ventas";
-  const period = (PERIODS.find((p) => p.value === param(sp, "p"))?.value ?? "hoy") as Period;
+  const period = (PERIODS.find((p) => p.value === param(sp, "p"))?.value ?? (param(sp, "r") === "rentabilidad" ? "mes" : "hoy")) as Period;
   const { from, to } = periodRange(period);
   const inRange = (s: Sale) => s.status !== "cancelada" && s.date >= from && s.date <= to;
   const productName = (id: string) => db.products.find((p) => p.id === id)?.name ?? "—";
@@ -72,6 +74,7 @@ export default async function ReportesPage({ searchParams }: PageProps<"/reporte
 
   let head: string[] = [], body: Row[] = [];
   let extra: string | null = null;
+  let detail: ReactNode = null;
   let channelCards: { name: string; orders: number; revenue: number }[] = [];
   let kpis: { label: string; value: string; hint?: string }[] = [];
 
@@ -91,8 +94,21 @@ export default async function ReportesPage({ searchParams }: PageProps<"/reporte
     body = productRows(db.sales.filter(inRange), true);
     channelCards = channelSummary(db.sales.filter(inRange));
   } else if (report === "rentabilidad") {
-    head = ["Producto", "Facturación", "Costo", "Margen", "Margen %"];
-    body = byProduct(db, from, to).sort((a, b) => b.marginPct - a.marginPct).map((p) => ({ cells: [p.name, money(p.revenue), money(p.cost), money(p.margin), pct(p.marginPct)] }));
+    const r = profitabilityByProduct(db, from, to);
+    head = ["Producto", "Ventas", "Facturación", "Costo", "Comisión", "Gastos operativos", "Publicidad", "Ganancia", "Ganancia %", "Por venta"];
+    body = r.rows.map((x) => ({ cells: [x.name, int(x.sales), money(x.revenue), money(x.cost), money(x.fee), money(x.ops), money(x.ads), money(x.profit), pct(x.profitPct), money(x.perSale)] }));
+    if (r.rows.length) {
+      const t = r.total;
+      body.push({ total: true, cells: ["Total", int(t.sales), money(t.revenue), money(t.cost), money(t.fee), money(t.ops), money(t.ads), money(t.profit), pct(t.profitPct), money(t.perSale)] });
+    }
+    detail = <ProfitDetail r={r} />;
+    kpis = [
+      { label: "Ganancia", value: money(r.total.profit), hint: `${pct(r.total.profitPct)} de lo facturado` },
+      { label: "Por venta", value: money(r.total.perSale), hint: `${int(r.total.sales)} ventas` },
+      { label: "Comisión del canal", value: money(r.total.fee), hint: r.estimatedFees ? `${int(r.estimatedFees)} estimadas` : undefined },
+      { label: "Publicidad", value: money(r.total.ads), hint: r.total.ads ? undefined : "Sin cargar en Gastos" },
+    ];
+    extra = `Cada venta se reparte entre sus productos según lo que facturan. Costo = el costo cargado en cada producto. Comisión = lo que cobró el canal en cada venta; si Mercado Libre todavía no lo informó, se estima con el ${COMISION_PCT} %. Gastos operativos = logística, combustible, cajas, librería y similares del período, repartidos en partes iguales entre las ventas (cada entrega cuesta lo mismo, sea chica o grande). Publicidad = los gastos cargados con "publicidad" en la categoría o en el detalle, repartidos según lo facturado.${r.total.ads ? "" : " No hay gastos de publicidad cargados en este período: cargá la factura de Mercado Libre o Meta en Gastos y se descuenta acá."} No incluye gastos fijos (contador, sistemas, servicios…): este período tiene ${money(r.fixed)} sin repartir.`;
   } else if (report === "mercadolibre") {
     const ml = db.sales.filter((x) => x.channel === "Mercado Libre" && inRange(x));
     const g = new Map<string, { orders: number; units: number; bruto: number; neto: number }>();
@@ -173,7 +189,7 @@ export default async function ReportesPage({ searchParams }: PageProps<"/reporte
       <InformeContador db={db} mes={param(sp, "mes")} report={report} period={period} />
       <nav className="flex flex-wrap gap-1.5" aria-label="Reporte">
         {REPORTS.map((r) => (
-          <Link key={r.key} href={`?r=${r.key}&p=${period}`} className={`rounded-md px-3 py-1.5 text-sm font-medium ${r.key === report ? "bg-primary text-white" : "bg-surface text-muted hover:text-ink border border-line"}`}>{r.label}</Link>
+          <Link key={r.key} href={`?r=${r.key}&p=${r.key === "rentabilidad" && period === "hoy" ? "mes" : period}`} className={`rounded-md px-3 py-1.5 text-sm font-medium ${r.key === report ? "bg-primary text-white" : "bg-surface text-muted hover:text-ink border border-line"}`}>{r.label}</Link>
         ))}
       </nav>
       <nav className="flex flex-wrap gap-1.5 text-sm" aria-label="Período">
@@ -213,12 +229,108 @@ export default async function ReportesPage({ searchParams }: PageProps<"/reporte
           columns={head.map((h, i) => ({ key: String(i), header: h, align: i === 0 || h === "Canal" ? ("left" as const) : ("right" as const), render: (r: Row) => (h === "Canal" && r.cells[i] ? <span className="inline-flex items-center gap-2 font-medium"><span className="h-2.5 w-2.5 rounded-full" style={{ background: channelColor(r.cells[i]) }} aria-hidden />{r.cells[i]}</span> : r.cells[i]) }))}
         />
       )}
+      {detail}
       <Guide title="¿Cómo exporto este reporte?">Por ahora se exporta en CSV con el botón de arriba; se abre directo en Excel.</Guide>
     </div>
   );
 }
 
 type Line = { label: string; amount: number; kind: "pos" | "neg" | "total" | "info" };
+
+const TREATMENT = { reparte: "Se reparte entre las ventas", publicidad: "Publicidad", fijo: "Fijo: no se reparte" } as const;
+
+/** Rentabilidad: resumen del período, gastos que se usaron y el cálculo de cada producto paso a paso. */
+function ProfitDetail({ r }: { r: ReturnType<typeof profitabilityByProduct> }) {
+  const t = r.total;
+  const share = (n: number) => (t.revenue > 0 ? pct((n / t.revenue) * 100) : "—");
+  const antes = t.revenue - t.cost - t.fee - t.ops;
+  const summary: { label: string; amount: number; sign: "" | "−" | "="; strong?: boolean }[] = [
+    { label: "Facturación", amount: t.revenue, sign: "" },
+    { label: "Costo de los productos", amount: t.cost, sign: "−" },
+    { label: "Comisión del canal", amount: t.fee, sign: "−" },
+    { label: "Gastos operativos", amount: t.ops, sign: "−" },
+    { label: "Queda antes de publicidad", amount: antes, sign: "=", strong: true },
+    { label: "Publicidad", amount: t.ads, sign: "−" },
+    { label: "Ganancia", amount: t.profit, sign: "=", strong: true },
+    { label: "Gastos fijos sin repartir", amount: r.fixed, sign: "−" },
+    { label: "Resultado después de los fijos", amount: t.profit - r.fixed, sign: "=", strong: true },
+  ];
+  if (!r.rows.length) return null;
+  return (
+    <div className="space-y-4">
+      <section className="rounded-2xl border border-line bg-surface p-4 shadow-card">
+        <h2 className="mb-2 text-sm font-semibold">Resumen del período</h2>
+        <table className="w-full text-sm">
+          <tbody>
+            {summary.map((x) => (
+              <tr key={x.label} className={`border-t border-line first:border-t-0 ${x.strong ? "font-semibold" : ""}`}>
+                <td className="w-6 py-1.5 text-muted">{x.sign}</td>
+                <td className="py-1.5">{x.label}</td>
+                <td className="py-1.5 text-right tabular-nums">{money(x.amount)}</td>
+                <td className="w-20 py-1.5 text-right tabular-nums text-muted">{share(x.amount)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+
+      <section className="rounded-2xl border border-line bg-surface p-4 shadow-card">
+        <h2 className="mb-2 text-sm font-semibold">Gastos del período y qué se hizo con cada uno</h2>
+        {r.expenseLines.length ? (
+          <table className="w-full text-sm">
+            <thead><tr className="text-left text-xs text-muted"><th className="py-1 font-medium">Categoría</th><th className="py-1 text-right font-medium">Gastos</th><th className="py-1 text-right font-medium">Monto</th><th className="py-1 pl-4 font-medium">Cómo se trata</th></tr></thead>
+            <tbody>
+              {r.expenseLines.map((l) => (
+                <tr key={`${l.treatment}|${l.category}`} className="border-t border-line">
+                  <td className="py-1.5">{l.category}</td>
+                  <td className="py-1.5 text-right tabular-nums">{int(l.count)}</td>
+                  <td className="py-1.5 text-right tabular-nums">{money(l.amount)}</td>
+                  <td className="py-1.5 pl-4 text-muted">{TREATMENT[l.treatment]}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : <p className="text-sm text-muted">No hay gastos cargados en este período.</p>}
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold">Cálculo de cada producto</h2>
+        {r.rows.map((x, idx) => {
+          const opsRows = Object.entries(x.opsDetail).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+          const unitCost = x.units > 0 ? x.cost / x.units : 0;
+          const lines: { label: string; hint?: string; amount: number; sign: "" | "−" | "="; strong?: boolean }[] = [
+            { label: "Facturación", hint: `${int(x.units)} unidad${x.units === 1 ? "" : "es"} en ${int(x.sales)} venta${x.sales === 1 ? "" : "s"} · ${money(x.units ? x.revenue / x.units : 0)} por unidad`, amount: x.revenue, sign: "" },
+            { label: "Costo del producto", hint: `${int(x.units)} × ${money(unitCost)}`, amount: x.cost, sign: "−" },
+            { label: "Comisión del canal", hint: `${x.revenue > 0 ? pct((x.fee / x.revenue) * 100) : "—"} de lo facturado${x.feeEstimated ? ` · ${int(x.feeEstimated)} venta${x.feeEstimated === 1 ? "" : "s"} estimada${x.feeEstimated === 1 ? "" : "s"}` : ""}`, amount: x.fee, sign: "−" },
+            ...opsRows.map(([k, v]) => ({ label: k, hint: "Parte que le toca de los gastos del período", amount: v, sign: "−" as const })),
+            ...(opsRows.length ? [] : [{ label: "Gastos operativos", hint: "Sin gastos cargados en el período", amount: 0, sign: "−" as const }]),
+            { label: "Publicidad", hint: x.ads ? "Repartida según lo facturado" : "Sin gastos de publicidad cargados", amount: x.ads, sign: "−" },
+            { label: "Ganancia", hint: `${pct(x.profitPct)} de lo facturado · ${money(x.perSale)} por venta${x.units ? ` · ${money(x.profit / x.units)} por unidad` : ""}`, amount: x.profit, sign: "=", strong: true },
+          ];
+          return (
+            <details key={x.productId} open={idx === 0} className="group rounded-2xl border border-line bg-surface shadow-card">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
+                <span className="min-w-0 truncate">{x.name}</span>
+                <span className="flex shrink-0 items-center gap-3 tabular-nums"><span className={x.profit < 0 ? "text-danger" : "text-success"}>{money(x.profit)}</span><span className="text-muted">{pct(x.profitPct)}</span></span>
+              </summary>
+              <table className="mx-4 mb-3 w-[calc(100%-2rem)] text-sm">
+                <tbody>
+                  {lines.map((l) => (
+                    <tr key={l.label} className={`border-t border-line ${l.strong ? "font-semibold" : ""}`}>
+                      <td className="w-6 py-1.5 align-top text-muted">{l.sign}</td>
+                      <td className="py-1.5"><p>{l.label}</p>{l.hint && <p className="text-xs font-normal text-muted">{l.hint}</p>}</td>
+                      <td className="py-1.5 text-right align-top tabular-nums">{money(l.amount)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </details>
+          );
+        })}
+      </section>
+    </div>
+  );
+}
 
 /** Balance en bloques: lo que entra en verde, lo que sale en rojo y cada resultado destacado. */
 function BalanceView({ b }: { b: ReturnType<typeof balance> }) {

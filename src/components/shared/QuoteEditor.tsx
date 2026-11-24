@@ -119,7 +119,7 @@ export function QuoteEditor({ products, customers, defaultTaxPct, initial, label
             <Field label="Validez (días)"><Input type="number" min="1" value={validDays} onChange={(e) => setValidDays(e.target.value)} /></Field>
           </div>
           <Field label="Notas o condiciones (se imprimen al pie)">
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Ej: Entrega a coordinar. Forma de pago: transferencia." className="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+            <textarea spellCheck lang="es" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Ej: Entrega a coordinar. Forma de pago: transferencia." className="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
           </Field>
 
           <div className="rounded-lg border border-line bg-surface p-3 text-sm">

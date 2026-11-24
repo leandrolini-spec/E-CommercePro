@@ -43,7 +43,7 @@ export function ReplyForm({ action, max, label, placeholder, hint, quick, multi 
           ))}
         </div>
       )}
-      <textarea
+      <textarea spellCheck lang="es"
         name="text" value={text} onChange={(e) => setText(e.target.value)} rows={3} maxLength={limit} required placeholder={placeholder} disabled={pending}
         className="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
       />

@@ -126,7 +126,7 @@ export function CreateDrawer({
                     ))}
                   </div>
                 )}
-                <textarea name={f.name} required={f.required} defaultValue={f.defaultValue} placeholder={f.placeholder} rows={f.rows ?? (f.readOnly ? 3 : 5)} maxLength={f.maxLength} readOnly={f.readOnly} className={`w-full rounded-md border border-line px-3 py-2 ${f.readOnly ? "bg-bg text-muted" : "bg-surface"} text-sm text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/20`} />
+                <textarea spellCheck lang="es" name={f.name} required={f.required} defaultValue={f.defaultValue} placeholder={f.placeholder} rows={f.rows ?? (f.readOnly ? 3 : 5)} maxLength={f.maxLength} readOnly={f.readOnly} className={`w-full rounded-md border border-line px-3 py-2 ${f.readOnly ? "bg-bg text-muted" : "bg-surface"} text-sm text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/20`} />
                 </>
               ) : f.type === "category" ? (
                 <CategoryInput name={f.name} required={f.required} defaultValue={f.defaultValue} suggestions={f.suggestions ?? []} />

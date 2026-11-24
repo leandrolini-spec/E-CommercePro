@@ -177,14 +177,14 @@ export default async function ConfiguracionPage({ searchParams }: { searchParams
 
           <form action={saveQuickReplies}>
             <Card title="Respuestas rápidas" subtitle="Mensajes ya armados para las mensajerías: aparecen como botones arriba del cuadro de texto y se completan con un clic. Una por línea, con el formato  Título | texto.  Variables: {nombre} {empresa} {productos}. Para un salto de línea escribí \n. Máximo 350 caracteres por mensaje (límite de Mercado Libre); para mandar hasta 3 seguidos, separalos con una línea que diga solo ---  (escrita así:  \n---\n).">
-              <textarea name="replies" rows={12} defaultValue={quickToLines(quickRepliesOf(db.settings.company))} className="w-full rounded-md border border-line bg-surface px-3 py-2 font-mono text-xs text-ink focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              <textarea spellCheck lang="es" name="replies" rows={12} defaultValue={quickToLines(quickRepliesOf(db.settings.company))} className="w-full rounded-md border border-line bg-surface px-3 py-2 font-mono text-xs text-ink focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
             </Card>
             <div className="mt-4"><SaveButton /></div>
           </form>
 
           <form action={saveQuestionReplies}>
             <Card title="Respuestas para preguntas frecuentes" subtitle="Aparecen como botones solo al contestar una pregunta de una publicación (Mensajes y Mercado Libre → Preguntas). Una por línea, con el formato  Título | texto.  Variables: {empresa} {productos}. Para un salto de línea escribí \n. Hasta 2000 caracteres. No incluyas teléfonos, mails ni links: Mercado Libre no permite pasarlos. Vacío = no hay ninguna.">
-              <textarea name="replies" rows={8} defaultValue={quickToLines(c.questionReplies ?? [])} placeholder="Factura | Sí, hacemos factura. Pasanos los datos después de la compra." className="w-full rounded-md border border-line bg-surface px-3 py-2 font-mono text-xs text-ink focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              <textarea spellCheck lang="es" name="replies" rows={8} defaultValue={quickToLines(c.questionReplies ?? [])} placeholder="Factura | Sí, hacemos factura. Pasanos los datos después de la compra." className="w-full rounded-md border border-line bg-surface px-3 py-2 font-mono text-xs text-ink focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
             </Card>
             <div className="mt-4"><SaveButton /></div>
           </form>
@@ -198,10 +198,10 @@ export default async function ConfiguracionPage({ searchParams }: { searchParams
                 <Field wide label="Solo estas publicaciones (opcional)" hint="Ids de Mercado Libre separados por coma (MLA123456789). Vacío = todas las publicaciones."><Input name="publicaciones" defaultValue={(pa.publicaciones ?? []).join(", ")} placeholder="MLA123456789, MLA987654321" /></Field>
                 <Field wide label="Zonas con envío gratis (opcional)" hint="Localidades o partidos separados por coma. Si la pregunta nombra una, se usa el texto «zona_gratis»."><Input name="zonasGratis" defaultValue={(pa.zonasGratis ?? []).join(", ")} placeholder="CABA, Quilmes, Tres de Febrero" /></Field>
                 <Field wide label="Textos" hint={`Una línea por tipo de pregunta, como  tipo | texto  (\\n = salto de línea, hasta 900 caracteres, sin teléfonos, mails ni links). Tipos: ${TEXT_KEYS.map((k) => `${k.key} (${k.label})`).join("; ")}. Un tipo sin texto no se contesta.`}>
-                  <textarea name="textos" rows={8} defaultValue={Object.entries(pa.textos ?? {}).map(([k, t]) => `${k} | ${t.replace(/\n/g, "\\n")}`).join("\n")} placeholder="factura | Sí, hacemos factura. Pasanos los datos por mensaje después de la compra." className="w-full rounded-md border border-line bg-surface px-3 py-2 font-mono text-xs text-ink focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                  <textarea spellCheck lang="es" name="textos" rows={8} defaultValue={Object.entries(pa.textos ?? {}).map(([k, t]) => `${k} | ${t.replace(/\n/g, "\\n")}`).join("\n")} placeholder="factura | Sí, hacemos factura. Pasanos los datos por mensaje después de la compra." className="w-full rounded-md border border-line bg-surface px-3 py-2 font-mono text-xs text-ink focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
                 </Field>
                 <label className="flex items-center gap-2 text-sm font-medium sm:col-span-2"><input type="checkbox" name="ia" value="1" defaultChecked={!!pa.ia} className="h-4 w-4" /> <span>Usar IA para lo que los textos no cubren <span className="font-normal text-muted">(necesita ANTHROPIC_API_KEY en el servidor)</span></span></label>
-                <Field wide label="Política del negocio (para la IA)" hint="Lo único que la IA puede afirmar: envíos, horarios, facturación, garantía… Sin teléfonos, mails ni links. Sin política la IA no contesta."><textarea name="politica" rows={5} maxLength={3000} defaultValue={pa.politica ?? ""} className="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" /></Field>
+                <Field wide label="Política del negocio (para la IA)" hint="Lo único que la IA puede afirmar: envíos, horarios, facturación, garantía… Sin teléfonos, mails ni links. Sin política la IA no contesta."><textarea spellCheck lang="es" name="politica" rows={5} maxLength={3000} defaultValue={pa.politica ?? ""} className="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" /></Field>
               </div>
               <Guide className="mt-3" title="Qué nunca hace">No contesta pedidos por cantidad, reclamos de quien ya compró, varias preguntas mezcladas ni charlas en curso con el mismo comprador (esas te llegan al celular). Tus textos no pueden llevar datos de contacto y la IA nunca dice precios, costos de envío ni códigos postales. Cada respuesta queda anotada en el registro de sincronizaciones como «respuesta-auto».</Guide>
             </Card>
@@ -270,7 +270,7 @@ export default async function ConfiguracionPage({ searchParams }: { searchParams
                   <ColorField name="color2" defaultValue={soft} />
                 </Field>
                 <Field label="Texto al pie de los presupuestos" hint="Si lo dejás vacío se usa el texto estándar." wide>
-                  <textarea name="quoteFooter" rows={3} defaultValue={b.quoteFooter} className="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                  <textarea spellCheck lang="es" name="quoteFooter" rows={3} defaultValue={b.quoteFooter} className="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
                 </Field>
               </div>
             </Card>
